@@ -6,16 +6,22 @@ import { anonymousConfessionalGuidance } from '@/ai/flows/anonymous-confessional
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mic, Square, Loader2, Wand2, Edit3 } from 'lucide-react';
+import { Mic, Square, Loader2, Wand2, Edit3, BookOpen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 type RecordingState = 'idle' | 'recording' | 'stopped' | 'transcribing' | 'guiding';
+
+interface Guidance {
+    relevantVerses: string;
+    reflection: string;
+}
 
 export default function ConfessionalPage() {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [transcription, setTranscription] = useState('');
-  const [guidance, setGuidance] = useState('');
+  const [guidance, setGuidance] = useState<Guidance | null>(null);
   const [audioDataUri, setAudioDataUri] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -40,7 +46,7 @@ export default function ConfessionalPage() {
       mediaRecorderRef.current.start();
       setRecordingState('recording');
       setTranscription('');
-      setGuidance('');
+      setGuidance(null);
       setAudioDataUri(null);
     } catch (err) {
       console.error('Error accessing microphone:', err);
@@ -92,10 +98,10 @@ export default function ConfessionalPage() {
       return;
     }
     setRecordingState('guiding');
-    setGuidance('');
+    setGuidance(null);
     try {
       const result = await anonymousConfessionalGuidance({ transcription });
-      setGuidance(result.guidance);
+      setGuidance(result);
     } catch (error) {
       console.error('Guidance failed:', error);
       toast({
@@ -193,30 +199,53 @@ export default function ConfessionalPage() {
           </Card>
         )}
         
-        {(guidance || recordingState === 'guiding') && (
+        {recordingState === 'guiding' && (
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2 font-headline">
-                        <Wand2 className="h-5 w-5" />
-                        Step 3: Receive Guidance
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {recordingState === 'guiding' ? (
-                        <div className="flex h-32 items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : (
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-center gap-3 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Finding relevant scripture and preparing your guidance...</span>
+                    </div>
+                </CardContent>
+            </Card>
+        )}
+
+        {guidance && recordingState === 'idle' && (
+            <div className="space-y-6">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 font-headline">
+                            <BookOpen className="h-5 w-5" />
+                            Relevant Verses
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         <blockquote className="border-l-4 border-accent pl-4 italic text-muted-foreground">
+                            <p className="whitespace-pre-wrap font-body">{guidance.relevantVerses}</p>
+                        </blockquote>
+                    </CardContent>
+                </Card>
+
+                <Separator />
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 font-headline">
+                            <Wand2 className="h-5 w-5" />
+                            Reflection
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                         <Alert className="border-accent bg-accent/10">
                             <Wand2 className="h-4 w-4 !text-accent-foreground" />
                             <AlertTitle className="font-headline text-accent-foreground">A Message of Hope</AlertTitle>
                             <AlertDescription className="text-accent-foreground/80">
-                                <p className="whitespace-pre-wrap font-body leading-relaxed">{guidance}</p>
+                                <p className="whitespace-pre-wrap font-body leading-relaxed">{guidance.reflection}</p>
                             </AlertDescription>
                         </Alert>
-                    )}
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         )}
       </div>
     </div>
