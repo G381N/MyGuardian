@@ -1,25 +1,45 @@
+'use client';
+
 import { generateDailyReflection } from '@/ai/flows/daily-scripture-reflection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useEffect, useState } from 'react';
 
-export const revalidate = 3600; // Re-generate the page every hour
-
-async function getDailyReflection() {
-  try {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const reflectionData = await generateDailyReflection({ date: today });
-    return reflectionData;
-  } catch (error) {
-    console.error('Failed to generate daily reflection:', error);
-    return {
-      passage: 'Could not load scripture. Please try again later.',
-      reflection: 'Could not load reflection. Please try again later.',
-    };
-  }
+interface ReflectionData {
+  passage: string;
+  reflection: string;
 }
 
-export default async function HomePage() {
-  const { passage, reflection } = await getDailyReflection();
+export default function HomePage() {
+  const [reflectionData, setReflectionData] = useState<ReflectionData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getDailyReflection() {
+      try {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const data = await generateDailyReflection({ date: today });
+        setReflectionData(data);
+      } catch (error) {
+        console.error('Failed to generate daily reflection:', error);
+        setError('Could not load reflection. Please try again later.');
+      }
+    }
+    getDailyReflection();
+  }, []);
+
+  const passage = reflectionData?.passage ?? 'Loading scripture...';
+  const reflection = reflectionData?.reflection ?? 'Loading reflection...';
+
+  if (error) {
+    return (
+       <div className="p-4 sm:p-6 md:p-8">
+        <div className="mx-auto max-w-2xl text-center">
+            <p className="text-destructive">{error}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8">

@@ -1,4 +1,3 @@
-// src/ai/flows/daily-scripture-reflection.ts
 'use server';
 
 /**
@@ -11,9 +10,10 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getRandomVerse } from '@/services/scripture';
 
 const DailyReflectionInputSchema = z.object({
-  date: z.string().describe('The date for which to generate the reflection (YYYY-MM-DD).'),
+  date: z.string().describe('The date for which to generate the reflection (YYYY-MM-DD). This is used to ensure a new verse is selected each day.'),
 });
 export type DailyReflectionInput = z.infer<typeof DailyReflectionInputSchema>;
 
@@ -29,17 +29,15 @@ export async function generateDailyReflection(input: DailyReflectionInput): Prom
 
 const prompt = ai.definePrompt({
   name: 'dailyReflectionPrompt',
-  input: {schema: DailyReflectionInputSchema},
-  output: {schema: DailyReflectionOutputSchema},
-  prompt: `You are a helpful AI assistant that provides a daily scripture passage from the King James Version (KJV) of the Bible and a concise, inspiring reflection on the passage.
+  input: {schema: z.object({ passage: z.string() }) },
+  output: {schema: z.object({ reflection: DailyReflectionOutputSchema.shape.reflection })},
+  prompt: `You are a helpful AI assistant that provides a concise, inspiring reflection on a scripture passage.
+  The user has received the following passage for today's reading:
 
-  Today's date: {{{date}}}
+  Passage: {{{passage}}}
 
-  Respond with a scripture passage and a thoughtful reflection. The reflection should be suitable for contemplation and inspiration.
-
-  Format:
-  Passage: [KJV Scripture Passage]
-  Reflection: [AI-generated reflection]`,
+  Provide a thoughtful reflection on this passage. The reflection should be suitable for contemplation and inspiration, be simple, empathetic, and comforting. The tone should feel like a guardian angel or Jesus gently guiding the user. Always ground reflections in the verse provided.
+  `,
 });
 
 const dailyReflectionFlow = ai.defineFlow(
@@ -48,8 +46,15 @@ const dailyReflectionFlow = ai.defineFlow(
     inputSchema: DailyReflectionInputSchema,
     outputSchema: DailyReflectionOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    const verse = await getRandomVerse(input.date);
+    const passage = `${verse.book} ${verse.chapter}:${verse.verse} - ${verse.text}`;
+    
+    const {output} = await prompt({ passage });
+    
+    return {
+        passage: passage,
+        reflection: output!.reflection,
+    };
   }
 );
