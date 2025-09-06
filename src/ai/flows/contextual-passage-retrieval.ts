@@ -66,10 +66,10 @@ const contextualPassageRetrievalFlow = ai.defineFlow(
         model: 'googleai/gemini-2.5-flash',
       });
 
-    const toolCalls = llmResponse.toolCalls();
-    if (toolCalls.length > 0) {
+    const toolRequests = llmResponse.toolRequests;
+    if (toolRequests.length > 0) {
       const toolResults = await Promise.all(
-        toolCalls.map((call) => ai.runTool(call))
+        toolRequests.map((call) => ai.runTool(call))
       );
       
       const verses = toolResults[0].output as Verse[];
@@ -82,7 +82,7 @@ const contextualPassageRetrievalFlow = ai.defineFlow(
     }
     
     // Fallback if the model doesn't use the tool, though it should.
-    const textResponse = llmResponse.text();
+    const textResponse = llmResponse.text;
     if (textResponse) {
         return { passage: textResponse };
     }
