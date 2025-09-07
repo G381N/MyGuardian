@@ -51,15 +51,13 @@ In the name of Jesus Christ, our Lord and Savior, I pray. Amen.`
     icon: Utensils,
     description: 'Blessing your meals with gratitude and remembrance',
     guide: 'Before each meal, pause to acknowledge God as the source of all good things. Remember those who are hungry and in need. Give thanks not only for the food before you, but for the hands that prepared it and the abundance God provides. Make your meal a moment of communion with the divine.',
-    prayer: `Bless us, O Lord, and these Your gifts which we are about to receive from Your bounty, through Christ our Lord.
+    prayer: `Thank You, Lord, for the food that You have provided us today. We are grateful for Your abundant blessings and Your constant care for our needs.
 
-Father, we thank You for this food that nourishes our bodies. May it strengthen us to serve You and our neighbors with love. We remember those who hunger and ask You to provide for their needs.
+Bless this food that You have prepared for us, and bless the hands that have prepared it with love and care. May this meal nourish our bodies and strengthen us to do Your will in all that we undertake.
 
-Bless the hands that prepared this meal and the earth that produced this harvest. May we never take for granted the abundance You provide.
+Grant us grateful hearts that never take for granted the bounty You provide, and help us to always remember those who are in need of their daily bread.
 
-Grant that we may always be grateful for Your blessings and generous in sharing with others.
-
-Through Jesus Christ our Lord. Amen.`
+We ask this in Christ our Lord. Amen.`
   },
   {
     id: 'sleeping',

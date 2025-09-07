@@ -1,21 +1,29 @@
-import type { Metadata } from 'next';
+'use client';
+
 import { AppLayout } from '@/components/app-layout';
 import { Toaster } from '@/components/ui/toaster';
+import LandingPage from '@/components/landing-page';
+import { useState } from 'react';
 import './globals.css';
-
-export const metadata: Metadata = {
-  title: 'MyGuardian',
-  description: 'Your personal guide for spiritual reflection and growth.',
-};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [hasStarted, setHasStarted] = useState(false);
+
+  const handleGetStarted = () => {
+    setHasStarted(true);
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <title>MyGuardian - Your Personal Spiritual Companion</title>
+        <meta name="description" content="Understand the Bible better with AI-powered insights, daily readings, and spiritual guidance. Completely anonymous and private." />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -28,7 +36,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
-        <AppLayout>{children}</AppLayout>
+        {!hasStarted ? (
+          <LandingPage onGetStarted={handleGetStarted} />
+        ) : (
+          <AppLayout>{children}</AppLayout>
+        )}
         <Toaster />
       </body>
     </html>

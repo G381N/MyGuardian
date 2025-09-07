@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Bot, MessageSquareQuote, Book, Heart, Feather } from 'lucide-react';
+import { BookOpen, Bot, MessageSquareQuote, Book, Heart, Cross } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -35,7 +35,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2 p-2">
             <Button variant="ghost" size="icon" className="shrink-0" asChild>
                 <Link href="/">
-                    <Feather className="h-6 w-6 text-primary" />
+                    <Cross className="h-6 w-6 text-primary" />
                     <span className="sr-only">MyGuardian Home</span>
                 </Link>
             </Button>
