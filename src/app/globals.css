@@ -79,3 +79,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrollbar hiding for fullscreen Bible reading */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Smooth zoom and scroll for fullscreen content */
+  .fullscreen-content {
+    scroll-behavior: smooth;
+  }
+  
+  .fullscreen-content:hover {
+    cursor: default;
+  }
+}

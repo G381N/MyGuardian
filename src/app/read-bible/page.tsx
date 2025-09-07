@@ -146,21 +146,36 @@ export default function ReadBiblePage() {
     if (!isFullscreen) return;
     
     const target = e.target as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const width = rect.width;
+    // Ignore clicks on buttons or interactive elements
+    if (target.closest('button') || target.closest('[role="button"]') || target.closest('select')) return;
     
-    if (clickX < width * 0.2) {
+    const clickX = e.clientX;
+    const screenWidth = window.innerWidth;
+    
+    if (clickX < screenWidth * 0.25) {
       navigateChapter('prev');
-    } else if (clickX > width * 0.8) {
+    } else if (clickX > screenWidth * 0.75) {
       navigateChapter('next');
     }
   }, [isFullscreen, selectedBook, selectedChapter, filteredBooks]);
 
   useEffect(() => {
     if (isFullscreen) {
+      // Auto-fit content and hide system scrollbars
+      document.body.style.overflow = 'hidden';
+      
+      // Reset scroll position when entering fullscreen
+      const container = document.querySelector('.fullscreen-content');
+      if (container) {
+        container.scrollTop = 0;
+      }
+      
       document.addEventListener('click', handleFullscreenNavigation);
-      return () => document.removeEventListener('click', handleFullscreenNavigation);
+      
+      return () => {
+        document.body.style.overflow = '';
+        document.removeEventListener('click', handleFullscreenNavigation);
+      };
     }
   }, [isFullscreen, handleFullscreenNavigation]);
 
@@ -215,8 +230,8 @@ export default function ReadBiblePage() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-amber-50 via-white to-sky-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      <div className="p-4 sm:p-6 md:p-8 relative">
-        <div className="mx-auto max-w-5xl space-y-6">
+      <div className={`${isFullscreen ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content' : 'p-4 sm:p-6 md:p-8'} relative`}>
+        <div className={`mx-auto ${isFullscreen ? 'max-w-4xl px-8 py-6' : 'max-w-5xl'} space-y-6`}>
           {/* Header */}
           {!isFullscreen && (
             <header className="text-center space-y-2">
@@ -340,6 +355,44 @@ export default function ReadBiblePage() {
               <Button variant="ghost" size="icon" onClick={() => navigateChapter('next')}>
                 <ArrowRight className="h-6 w-6" />
               </Button>
+            </div>
+          )}
+
+          {/* Bottom Navigation Bar (Fullscreen) */}
+          {isFullscreen && (
+            <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-amber-200 dark:border-blue-800 p-4 z-20">
+              <div className="flex items-center justify-between max-w-4xl mx-auto">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigateChapter('prev')}
+                  disabled={selectedBook?.id === 1 && selectedChapter === 1}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Previous Chapter
+                </Button>
+                
+                <div className="flex items-center gap-3">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setIsFullscreen(false)}
+                    className="h-9 w-9"
+                  >
+                    <Minimize className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigateChapter('next')}
+                  disabled={selectedBook?.id === 66 && selectedChapter >= (selectedBook?.chapters || 0)}
+                  className="flex items-center gap-2"
+                >
+                  Next Chapter
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
 
