@@ -195,9 +195,9 @@ Your Guardian Angel`;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-blue-50 dark:from-gray-900 dark:to-blue-950">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-sky-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950">
       <div className="p-4 sm:p-6 md:p-8">
-        <div className="mx-auto max-w-4xl space-y-6">
+        <div className="mx-auto max-w-5xl space-y-6">
           {/* Header */}
           <header className="text-center space-y-2">
             <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -296,29 +296,42 @@ Your Guardian Angel`;
           )}
 
           {/* Scripture Content */}
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-sky-200 dark:border-blue-800">
-            <CardHeader>
-              <CardTitle className="text-center font-headline text-2xl">
-                {selectedBook?.name} Chapter {selectedChapter}
+          <Card className="bg-white/98 dark:bg-gray-800/98 backdrop-blur-sm border-amber-200 dark:border-blue-800 shadow-xl">
+            <CardHeader className="text-center pb-8 bg-gradient-to-r from-amber-50 to-sky-50 dark:from-gray-900 dark:to-blue-950 border-b border-amber-200 dark:border-blue-800">
+              <CardTitle className="font-headline text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                {selectedBook?.name}
               </CardTitle>
+              <div className="text-2xl font-semibold text-amber-700 dark:text-amber-300">
+                Chapter {selectedChapter}
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-8 sm:p-12">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                <div className="flex items-center justify-center py-16">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
                 </div>
               ) : (
-                <div className="space-y-4" onMouseUp={handleTextSelection}>
-                  {verses.map((verse) => (
-                    <div key={verse.verse} className="flex gap-3">
-                      <span className="text-sm font-medium text-primary min-w-[2rem] text-right">
-                        {verse.verse}
-                      </span>
-                      <p className="text-base leading-relaxed select-text">
-                        {verse.text}
+                <div className="max-w-4xl mx-auto">
+                  <div className="space-y-6" onMouseUp={handleTextSelection}>
+                    {verses.map((verse, index) => (
+                      <div key={verse.verse} className="group flex items-start">
+                        <span className="inline-block w-12 text-lg font-bold text-amber-600 dark:text-amber-400 mr-4 text-right flex-shrink-0 mt-1">
+                          {verse.verse}
+                        </span>
+                        <p className="text-xl leading-9 text-gray-900 dark:text-gray-100 font-headline select-text font-normal flex-1">
+                          {verse.text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {verses.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500 dark:text-gray-400">
+                        No verses found for this chapter.
                       </p>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </CardContent>

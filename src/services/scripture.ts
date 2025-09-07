@@ -33,34 +33,58 @@ async function loadCPDVData(): Promise<Verse[]> {
     
     // Skip header row and parse CPDV format
     const data = lines.slice(1).map((line) => {
-      // Handle CSV parsing with potential commas in quoted text
-      const match = line.match(/^(\d+),([^,]+),(\d+),"([^"]*)"(?:\|.*)?.*,(\d+),(\d+)$/);
-      if (match) {
-        const [, bookId, book, chapter, text, count, verse] = match;
-        return {
-          bookId: parseInt(bookId, 10),
-          book: book.trim(),
-          chapter: parseInt(chapter, 10),
-          verse: parseInt(verse, 10),
-          text: text.replace(/"/g, '').trim(),
-          count: parseInt(count, 10),
-        };
-      }
+      if (!line.trim()) return null;
       
-      // Fallback parsing for lines that don't match (like Maccabees)
-      const parts = line.split(',');
+      // Split by comma but handle quoted text properly
+      const parts: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"' && (i === 0 || line[i-1] === ',')) {
+          inQuotes = true;
+          continue;
+        } else if (char === '"' && inQuotes && (i === line.length - 1 || line[i+1] === ',')) {
+          inQuotes = false;
+          continue;
+        } else if (char === ',' && !inQuotes) {
+          parts.push(current.trim());
+          current = '';
+          continue;
+        }
+        current += char;
+      }
+      parts.push(current.trim());
+      
       if (parts.length >= 6) {
         const bookId = parseInt(parts[0], 10);
         const book = parts[1];
         const chapter = parseInt(parts[2], 10);
         let text = parts[3];
-        const count = parseInt(parts[parts.length - 2], 10);
-        const verse = parseInt(parts[parts.length - 1], 10);
+        const count = parseInt(parts[4], 10);
+        const verse = parseInt(parts[5], 10);
         
-        // Clean up text
-        if (text.startsWith('"') && text.endsWith('"')) {
-          text = text.slice(1, -1);
-        }
+        // Clean up text - fix encoding issues and special characters
+        text = text
+          .replace(/�/g, '"')     // Replace diamond symbols with proper quotes
+          .replace(/"/g, '"')     // Replace opening smart quotes
+          .replace(/"/g, '"')     // Replace closing smart quotes
+          .replace(/'/g, "'")     // Replace smart apostrophes
+          .replace(/'/g, "'")     // Replace opening smart apostrophes
+          .replace(/–/g, "-")     // Replace en dash
+          .replace(/—/g, "--")    // Replace em dash
+          .replace(/…/g, "...")   // Replace ellipsis
+          .replace(/\u00A0/g, " ") // Replace non-breaking spaces
+          .replace(/\u2013/g, "-") // Replace en dash (unicode)
+          .replace(/\u2014/g, "--") // Replace em dash (unicode)
+          .replace(/\u2018/g, "'") // Replace left single quotation mark
+          .replace(/\u2019/g, "'") // Replace right single quotation mark
+          .replace(/\u201C/g, '"') // Replace left double quotation mark
+          .replace(/\u201D/g, '"') // Replace right double quotation mark
+          .replace(/\u2026/g, "...") // Replace horizontal ellipsis
+          .replace(/\s+/g, " ")    // Replace multiple spaces with single space
+          .trim();
         
         if (!isNaN(bookId) && book && !isNaN(chapter) && !isNaN(verse) && text) {
           return {
@@ -68,7 +92,7 @@ async function loadCPDVData(): Promise<Verse[]> {
             book: book.trim(),
             chapter,
             verse,
-            text: text.trim(),
+            text,
             count: isNaN(count) ? text.length : count,
           };
         }
