@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Bot, MessageSquareQuote, Search, Feather } from 'lucide-react';
+import { BookOpen, Bot, MessageSquareQuote, Book, Heart, Feather } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -21,7 +21,8 @@ const navItems = [
   { href: '/', icon: BookOpen, label: "Today's Reading" },
   { href: '/confessional', icon: MessageSquareQuote, label: 'Confessional' },
   { href: '/chat', icon: Bot, label: 'Guardian Angel' },
-  { href: '/explore', icon: Search, label: 'Explore Scripture' },
+  { href: '/read-bible', icon: Book, label: 'ReadBible' },
+  { href: '/how-to-pray', icon: Heart, label: 'How to Pray' },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {

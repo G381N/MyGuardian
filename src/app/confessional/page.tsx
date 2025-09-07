@@ -71,7 +71,7 @@ export default function ConfessionalPage() {
         async function transcribeAudio() {
             setRecordingState('transcribing');
             try {
-                const result = await anonymousConfessionalTranscription({ audioDataUri });
+                const result = await anonymousConfessionalTranscription({ audioDataUri: audioDataUri! });
                 setTranscription(result.transcription);
             } catch (error) {
                 console.error('Transcription failed:', error);
