@@ -8,9 +8,24 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ChevronDown, ChevronLeft, ChevronRight, Filter, X, Maximize, Minimize, Heart, ArrowLeft, ArrowRight } from 'lucide-react';
-import { Verse, Book, getBooks, getChapter, getTestamentBooks } from '@/services/scripture';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+
+// Define types locally to avoid server import issues
+interface Verse {
+  bookId: number;
+  book: string;
+  chapter: number;
+  verse: number;
+  text: string;
+  count: number;
+}
+
+interface Book {
+  id: number;
+  name: string;
+  chapters: number[];
+}
 
 export default function ReadBiblePage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -32,7 +47,10 @@ export default function ReadBiblePage() {
   useEffect(() => {
     const loadBooks = async () => {
       try {
-        const booksData = await getBooks();
+        const response = await fetch('/api/scripture?action=books');
+        if (!response.ok) throw new Error('Failed to fetch books');
+        
+        const booksData = await response.json();
         setBooks(booksData);
         setFilteredBooks(booksData);
         if (booksData.length > 0) {
@@ -60,7 +78,10 @@ export default function ReadBiblePage() {
         setFilteredBooks(books);
       } else {
         try {
-          const testamentBooks = await getTestamentBooks(testament);
+          const response = await fetch(`/api/scripture?action=testament-books&testament=${testament}`);
+          if (!response.ok) throw new Error('Failed to fetch testament books');
+          
+          const testamentBooks = await response.json();
           setFilteredBooks(testamentBooks);
         } catch (error) {
           console.error('Failed to filter books:', error);
@@ -79,7 +100,10 @@ export default function ReadBiblePage() {
 
       try {
         setLoading(true);
-        const chapterVerses = await getChapter(selectedBook.id, selectedChapter);
+        const response = await fetch(`/api/scripture?action=chapter&bookId=${selectedBook.id}&chapter=${selectedChapter}`);
+        if (!response.ok) throw new Error('Failed to fetch chapter');
+        
+        const chapterVerses = await response.json();
         setVerses(chapterVerses);
       } catch (error) {
         console.error('Failed to load chapter:', error);
@@ -196,14 +220,22 @@ export default function ReadBiblePage() {
     setGeneratingReflection(true);
 
     try {
-      const { biblicalPassageReflection } = await import('@/ai/flows/biblical-passage-reflection');
-      const context = `${selectedBook.name} Chapter ${selectedChapter}`;
-      
-      const result = await biblicalPassageReflection({
-        selectedText: text,
-        context: context,
+      const response = await fetch('/api/biblical-reflection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selectedText: text,
+          context: `${selectedBook.name} Chapter ${selectedChapter}`,
+        }),
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to generate reflection');
+      }
+
+      const result = await response.json();
       setReflection(result.reflection);
     } catch (error) {
       console.error('Failed to generate reflection:', error);
