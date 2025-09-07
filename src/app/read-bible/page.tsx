@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronDown, ChevronLeft, ChevronRight, Filter, Plus, Sparkles } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ChevronDown, ChevronLeft, ChevronRight, Filter, X, Maximize, Minimize, Heart, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Verse, Book, getBooks, getChapter, getTestamentBooks } from '@/services/scripture';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -25,6 +25,7 @@ export default function ReadBiblePage() {
   const [reflectionOpen, setReflectionOpen] = useState(false);
   const [reflection, setReflection] = useState<string>('');
   const [generatingReflection, setGeneratingReflection] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
 
   // Load books on component mount
@@ -137,40 +138,58 @@ export default function ReadBiblePage() {
     }
   };
 
-  const handleTextSelection = useCallback(() => {
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  const handleFullscreenNavigation = useCallback((e: MouseEvent) => {
+    if (!isFullscreen) return;
+    
+    const target = e.target as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    
+    if (clickX < width * 0.2) {
+      navigateChapter('prev');
+    } else if (clickX > width * 0.8) {
+      navigateChapter('next');
+    }
+  }, [isFullscreen, selectedBook, selectedChapter, filteredBooks]);
+
+  useEffect(() => {
+    if (isFullscreen) {
+      document.addEventListener('click', handleFullscreenNavigation);
+      return () => document.removeEventListener('click', handleFullscreenNavigation);
+    }
+  }, [isFullscreen, handleFullscreenNavigation]);
+
+  const handleTextSelection = useCallback(async () => {
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
     
     if (selectedText && selectedText.length > 10) {
       setHighlightedText(selectedText);
+      setReflectionOpen(true);
+      await generateReflection(selectedText);
     }
-  }, []);
+  }, [selectedBook, selectedChapter]);
 
-  const generateReflection = async () => {
-    if (!highlightedText) return;
+  const generateReflection = async (text: string) => {
+    if (!text || !selectedBook) return;
 
     setGeneratingReflection(true);
-    setReflectionOpen(true);
 
     try {
-      // Simple reflection generation (in a real app, this would call your AI service)
-      // For now, we'll create a template-based reflection
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      const { biblicalPassageReflection } = await import('@/ai/flows/biblical-passage-reflection');
+      const context = `${selectedBook.name} Chapter ${selectedChapter}`;
       
-      const reflectionText = `Dear beloved child,
+      const result = await biblicalPassageReflection({
+        selectedText: text,
+        context: context,
+      });
 
-These words speak deeply to your heart: "${highlightedText}"
-
-In these sacred verses, God reveals His love and guidance for your journey. Like a gentle shepherd, He speaks through scripture to comfort, strengthen, and direct your path. Let these words settle in your soul, knowing that the Almighty has placed them before you at just the right moment.
-
-Remember, you are never alone. The Creator of the universe walks with you, speaks to you through His word, and loves you with an everlasting love. Allow these truths to transform your heart and guide your steps today.
-
-May this passage be a light unto your path and a lamp unto your feet.
-
-With divine love and guidance,
-Your Guardian Angel`;
-
-      setReflection(reflectionText);
+      setReflection(result.reflection);
     } catch (error) {
       console.error('Failed to generate reflection:', error);
       toast({
@@ -195,96 +214,100 @@ Your Guardian Angel`;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-sky-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950">
-      <div className="p-4 sm:p-6 md:p-8">
+    <div className={`min-h-screen bg-gradient-to-br from-amber-50 via-white to-sky-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+      <div className="p-4 sm:p-6 md:p-8 relative">
         <div className="mx-auto max-w-5xl space-y-6">
           {/* Header */}
-          <header className="text-center space-y-2">
-            <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              ReadBible
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Catholic Public Domain Version
-            </p>
-          </header>
+          {!isFullscreen && (
+            <header className="text-center space-y-2">
+              <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                ReadBible
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Catholic Public Domain Version
+              </p>
+            </header>
+          )}
 
           {/* Filter Bar */}
-          <Collapsible open={filterOpen} onOpenChange={setFilterOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filters & Navigation
-                </span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Testament Toggle */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Testament</label>
-                  <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new') => setTestament(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Books</SelectItem>
-                      <SelectItem value="old">Old Testament</SelectItem>
-                      <SelectItem value="new">New Testament</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {!isFullscreen && (
+            <Collapsible open={filterOpen} onOpenChange={setFilterOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filters & Navigation
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Testament Toggle */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Testament</label>
+                    <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new') => setTestament(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Books</SelectItem>
+                        <SelectItem value="old">Old Testament</SelectItem>
+                        <SelectItem value="new">New Testament</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* Book Selector */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Book</label>
-                  <Select value={selectedBook?.id.toString() || ''} onValueChange={handleBookChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a book" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredBooks.map((book) => (
-                        <SelectItem key={book.id} value={book.id.toString()}>
-                          {book.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  {/* Book Selector */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Book</label>
+                    <Select value={selectedBook?.id.toString() || ''} onValueChange={handleBookChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a book" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredBooks.map((book) => (
+                          <SelectItem key={book.id} value={book.id.toString()}>
+                            {book.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* Chapter Selector */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Chapter</label>
-                  <Select value={selectedChapter.toString()} onValueChange={handleChapterChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedBook?.chapters.map((chapter) => (
-                        <SelectItem key={chapter} value={chapter.toString()}>
-                          Chapter {chapter}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  {/* Chapter Selector */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Chapter</label>
+                    <Select value={selectedChapter.toString()} onValueChange={handleChapterChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedBook?.chapters.map((chapter) => (
+                          <SelectItem key={chapter} value={chapter.toString()}>
+                            Chapter {chapter}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* Navigation */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Navigate</label>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => navigateChapter('prev')}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigateChapter('next')}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                  {/* Navigation */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Navigate</label>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => navigateChapter('prev')}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => navigateChapter('next')}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
 
           {/* Current Location Badge */}
           {selectedBook && (
@@ -292,6 +315,31 @@ Your Guardian Angel`;
               <Badge variant="secondary" className="text-base px-4 py-2">
                 {selectedBook.name} {selectedChapter}
               </Badge>
+            </div>
+          )}
+
+          {/* Fullscreen Toggle */}
+          <div className="absolute top-4 right-4">
+            <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </Button>
+          </div>
+
+          {/* Left Navigation Arrow (Fullscreen) */}
+          {isFullscreen && (
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+              <Button variant="ghost" size="icon" onClick={() => navigateChapter('prev')}>
+                <ArrowLeft className="h-6 w-6" />
+              </Button>
+            </div>
+          )}
+
+          {/* Right Navigation Arrow (Fullscreen) */}
+          {isFullscreen && (
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
+              <Button variant="ghost" size="icon" onClick={() => navigateChapter('next')}>
+                <ArrowRight className="h-6 w-6" />
+              </Button>
             </div>
           )}
 
@@ -344,35 +392,57 @@ Your Guardian Angel`;
               )}
             </CardContent>
           </Card>
+
+          {/* Bottom Navigation */}
+          {!isFullscreen && (
+            <div className="flex justify-center items-center gap-4 pb-6">
+              <Button variant="outline" onClick={() => navigateChapter('prev')} disabled={!selectedBook}>
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Previous Chapter
+              </Button>
+              <Button variant="outline" onClick={() => navigateChapter('next')} disabled={!selectedBook}>
+                Next Chapter
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Floating Action Button */}
-      {highlightedText && (
+      {highlightedText && !reflectionOpen && (
         <Button
-          onClick={generateReflection}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50"
+          onClick={() => setReflectionOpen(true)}
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-40"
           size="icon"
         >
-          <Sparkles className="h-6 w-6" />
+          <Heart className="h-6 w-6" />
         </Button>
       )}
 
-      {/* Reflection Modal */}
-      <Dialog open={reflectionOpen} onOpenChange={setReflectionOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="font-headline text-xl">Divine Reflection</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
+      {/* Reflection Sidebar */}
+      <Sheet open={reflectionOpen} onOpenChange={setReflectionOpen}>
+        <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="font-headline text-xl flex items-center gap-2">
+              <Heart className="h-5 w-5 text-amber-600" />
+              Divine Reflection
+            </SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 mt-6">
             {highlightedText && (
-              <Card className="bg-sky-50 dark:bg-blue-950/50 border-sky-200 dark:border-blue-800">
+              <Card className="bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800">
                 <CardContent className="pt-4">
-                  <p className="text-sm font-medium text-sky-700 dark:text-sky-300 mb-2">
+                  <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">
                     Selected Scripture:
                   </p>
-                  <blockquote className="italic text-sky-800 dark:text-sky-200 border-l-4 border-sky-300 dark:border-sky-600 pl-4">
-                    "{highlightedText}"
+                  <blockquote className="text-amber-800 dark:text-amber-200 border-l-4 border-amber-300 dark:border-amber-600 pl-4">
+                    <p className="line-clamp-2 text-sm">
+                      {highlightedText.length > 100 
+                        ? `${highlightedText.substring(0, 100)}...` 
+                        : highlightedText
+                      }
+                    </p>
                   </blockquote>
                 </CardContent>
               </Card>
@@ -388,15 +458,15 @@ Your Guardian Angel`;
                 </div>
               </div>
             ) : reflection ? (
-              <div className="prose prose-sky dark:prose-invert max-w-none">
+              <div className="prose prose-sm dark:prose-invert max-w-none">
                 <p className="whitespace-pre-line text-sm leading-relaxed">
                   {reflection}
                 </p>
               </div>
             ) : null}
           </div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -38,18 +38,21 @@ export default function ChatPage() {
       role: 'user',
       content: input,
     };
-    setMessages((prev) => [...prev, userMessage]);
+    
+    // Clear previous messages to avoid history
+    setMessages([userMessage]);
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      const result = await guardianAngelChatAdvice({ question: input });
+      const result = await guardianAngelChatAdvice({ question: currentInput });
       const assistantMessage: Message = {
         id: Date.now() + 1,
         role: 'assistant',
         content: result.advice,
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages([userMessage, assistantMessage]);
     } catch (error) {
       console.error('Chat advice failed:', error);
       toast({
@@ -57,7 +60,8 @@ export default function ChatPage() {
         title: 'An Error Occurred',
         description: 'Failed to get a response. Please try again.',
       });
-      // Do not remove user message on failure, so they can try again.
+      // Reset messages on error
+      setMessages([]);
     } finally {
       setIsLoading(false);
     }
@@ -128,19 +132,33 @@ export default function ChatPage() {
       </div>
 
       <div className="border-t p-4 bg-background">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask for guidance..."
-            autoComplete="off"
-            disabled={isLoading}
-          />
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send</span>
-          </Button>
-        </form>
+                  <form onSubmit={handleSubmit} className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask your Guardian Angel for guidance..."
+              disabled={isLoading}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading || !input.trim()}>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Send"
+              )}
+            </Button>
+            {messages.length > 0 && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setMessages([])}
+                className="px-3"
+                title="Clear conversation"
+              >
+                ✕
+              </Button>
+            )}
+          </form>
       </div>
     </div>
   );
