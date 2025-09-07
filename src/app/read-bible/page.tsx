@@ -301,9 +301,14 @@ Your Guardian Angel`;
               <CardTitle className="font-headline text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 {selectedBook?.name}
               </CardTitle>
-              <div className="text-2xl font-semibold text-amber-700 dark:text-amber-300">
+              <div className="text-2xl font-semibold text-amber-700 dark:text-amber-300 mb-4">
                 Chapter {selectedChapter}
               </div>
+              {selectedBook?.name === 'Genesis' && selectedChapter === 1 && (
+                <div className="text-lg font-medium text-gray-600 dark:text-gray-400 italic">
+                  "The Beginning"
+                </div>
+              )}
             </CardHeader>
             <CardContent className="p-8 sm:p-12">
               {loading ? (
@@ -312,17 +317,20 @@ Your Guardian Angel`;
                 </div>
               ) : (
                 <div className="max-w-4xl mx-auto">
-                  <div className="space-y-6" onMouseUp={handleTextSelection}>
-                    {verses.map((verse, index) => (
-                      <div key={verse.verse} className="group flex items-start">
-                        <span className="inline-block w-12 text-lg font-bold text-amber-600 dark:text-amber-400 mr-4 text-right flex-shrink-0 mt-1">
-                          {verse.verse}
-                        </span>
-                        <p className="text-xl leading-9 text-gray-900 dark:text-gray-100 font-headline select-text font-normal flex-1">
-                          {verse.text}
-                        </p>
-                      </div>
-                    ))}
+                  <div className="prose prose-xl prose-gray dark:prose-invert max-w-none" onMouseUp={handleTextSelection}>
+                    <div className="text-xl leading-8 text-gray-900 dark:text-gray-100 font-headline select-text text-justify">
+                      <p className="first-letter:text-7xl first-letter:font-bold first-letter:text-amber-600 dark:first-letter:text-amber-400 first-letter:mr-3 first-letter:float-left first-letter:leading-none first-letter:mt-2 indent-0">
+                        {verses.map((verse, index) => (
+                          <span key={verse.verse}>
+                            <sup className="text-sm font-bold text-amber-600 dark:text-amber-400 mr-1 relative -top-1">
+                              {verse.verse}
+                            </sup>
+                            {verse.text}
+                            {index < verses.length - 1 ? ' ' : ''}
+                          </span>
+                        ))}
+                      </p>
+                    </div>
                   </div>
                   
                   {verses.length === 0 && (
