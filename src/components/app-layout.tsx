@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Bot, MessageSquareQuote, Book, Heart, Cross, Sparkles } from 'lucide-react';
+import { BookOpen, Bot, MessageSquareQuote, Book, Heart, Cross, Sparkles, Zap } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -13,8 +13,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  SidebarTrigger,
   SidebarFooter,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -37,7 +37,7 @@ const navItems = [
   },
   { 
     href: '/chat', 
-    icon: Bot, 
+    icon: Zap, 
     label: 'Guardian Angel',
     description: "AI-powered biblical counsel",
     color: "text-blue-600 dark:text-blue-400"
@@ -60,15 +60,19 @@ const navItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { toggleSidebar } = useSidebar();
 
   return (
-    <SidebarProvider>
+    <>
       <Sidebar className="border-r border-amber-200 dark:border-amber-800">
         <SidebarHeader className="border-b border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/50">
           <div className="flex items-center gap-3 p-4">
-            <div className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700">
+            <button 
+              onClick={toggleSidebar}
+              className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors cursor-pointer"
+            >
               <Cross className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-            </div>
+            </button>
             <div className="flex flex-col">
               <h1 className="font-headline text-xl font-bold text-gray-900 dark:text-white">MyGuardian</h1>
               <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Your Spiritual Companion</p>
@@ -131,9 +135,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center justify-start gap-4 border-b border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-950/50 dark:to-orange-950/50 backdrop-blur-sm md:hidden">
-          <SidebarTrigger className="text-amber-600 dark:text-amber-400" />
-          <div className="flex items-center gap-2">
+          <button 
+            onClick={toggleSidebar}
+            className="ml-4 p-2 rounded-full bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
+          >
             <Cross className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          </button>
+          <div className="flex items-center gap-2">
             <h1 className="font-headline text-lg font-bold text-gray-900 dark:text-white">MyGuardian</h1>
           </div>
         </header>
@@ -141,6 +149,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }

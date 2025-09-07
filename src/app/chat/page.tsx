@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Send, User, Bot, Loader2, MessageCircle, Sparkles } from 'lucide-react';
+import { Send, User, Loader2, MessageCircle, Sparkles, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -75,7 +75,7 @@ export default function ChatPage() {
         <header className="border-b border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-700">
-              <Bot className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <Zap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <h1 className="font-headline text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -133,7 +133,7 @@ export default function ChatPage() {
                   {message.role === 'assistant' && (
                     <Avatar className="h-10 w-10 border-2 border-blue-200 dark:border-blue-700 shadow-sm">
                       <AvatarFallback className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                          <Bot className="h-5 w-5" />
+                          <Zap className="h-5 w-5" />
                       </AvatarFallback>
                     </Avatar>
                   )}
@@ -160,7 +160,7 @@ export default function ChatPage() {
                 <div className="flex items-start gap-4 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <Avatar className="h-10 w-10 border-2 border-blue-200 dark:border-blue-700 shadow-sm">
                       <AvatarFallback className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400">
-                          <Bot className="h-5 w-5" />
+                          <Zap className="h-5 w-5" />
                       </AvatarFallback>
                   </Avatar>
                   <div className="max-w-md rounded-xl p-4 bg-white dark:bg-gray-800 border border-blue-100 dark:border-blue-800 shadow-sm">

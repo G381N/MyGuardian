@@ -2,6 +2,7 @@
 
 import { AppLayout } from '@/components/app-layout';
 import { Toaster } from '@/components/ui/toaster';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import LandingPage from '@/components/landing-page';
 import { useState } from 'react';
 import './globals.css';
@@ -39,7 +40,9 @@ export default function RootLayout({
         {!hasStarted ? (
           <LandingPage onGetStarted={handleGetStarted} />
         ) : (
-          <AppLayout>{children}</AppLayout>
+          <SidebarProvider>
+            <AppLayout>{children}</AppLayout>
+          </SidebarProvider>
         )}
         <Toaster />
       </body>
