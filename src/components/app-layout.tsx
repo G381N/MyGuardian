@@ -60,7 +60,7 @@ const navItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, open } = useSidebar();
 
   return (
     <>
@@ -149,6 +149,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </SidebarInset>
+      
+      {/* Desktop Sidebar Toggle - Shows when sidebar is closed on desktop */}
+      {!open && (
+        <button
+          onClick={toggleSidebar}
+          className="hidden md:flex fixed top-4 right-4 z-50 p-3 rounded-full bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-all duration-200 shadow-lg backdrop-blur-sm items-center justify-center"
+          aria-label="Open sidebar"
+        >
+          <Cross className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+        </button>
+      )}
     </>
   );
 }
