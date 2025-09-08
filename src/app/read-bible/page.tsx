@@ -132,7 +132,7 @@ export default function ReadBiblePage() {
     setSelectedChapter(parseInt(chapter, 10));
   };
 
-  const navigateChapter = (direction: 'prev' | 'next') => {
+  const navigateChapter = useCallback((direction: 'prev' | 'next') => {
     if (!selectedBook) return;
 
     if (direction === 'prev') {
@@ -160,7 +160,7 @@ export default function ReadBiblePage() {
         }
       }
     }
-  };
+  }, [selectedBook, selectedChapter, filteredBooks]);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -181,7 +181,7 @@ export default function ReadBiblePage() {
     } else if (clickX > screenWidth * 0.75) {
       navigateChapter('next');
     }
-  }, [isFullscreen, selectedBook, selectedChapter, filteredBooks]);
+  }, [isFullscreen, navigateChapter]);
 
   useEffect(() => {
     if (isFullscreen) {
@@ -418,7 +418,7 @@ export default function ReadBiblePage() {
                 <Button 
                   variant="outline" 
                   onClick={() => navigateChapter('next')}
-                  disabled={selectedBook?.id === 66 && selectedChapter >= (selectedBook?.chapters || 0)}
+                  disabled={selectedBook?.id === 66 && selectedChapter >= Math.max(...(selectedBook?.chapters || [1]))}
                   className="flex items-center gap-2"
                 >
                   Next Chapter
