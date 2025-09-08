@@ -80,7 +80,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </SidebarHeader>
         
-        <SidebarContent className="bg-gradient-to-b from-white via-amber-50/30 to-orange-50/30 dark:from-gray-900 dark:via-amber-950/20 dark:to-orange-950/20">
+        <SidebarContent className="bg-gradient-to-b from-white via-amber-50/30 to-orange-50/30 dark:from-gray-900 dark:via-amber-950/20 dark:to-orange-950/20 scrollbar-hide overflow-y-auto">
           <div className="p-2">
             <SidebarMenu className="space-y-2">
               {navItems.map((item) => (

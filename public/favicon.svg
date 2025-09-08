@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Background circle with amber gradient -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </radialGradient>
+  </defs>
+  <circle cx="16" cy="16" r="16" fill="url(#bg)"/>
+  
+  <!-- Cross with slight shadow effect -->
+  <path d="M16 6v20M6 16h20" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.3" transform="translate(0.5, 0.5)"/>
+  <path d="M16 6v20M6 16h20" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+</svg>
