@@ -262,8 +262,8 @@ export default function ReadBiblePage() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-amber-50 via-white to-sky-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      <div className={`${isFullscreen ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content' : 'p-4 sm:p-6 md:p-8'} relative`}>
-        <div className={`mx-auto ${isFullscreen ? 'max-w-4xl px-8 py-6' : 'max-w-5xl'} space-y-6`}>
+      <div className={`${isFullscreen ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content' : 'p-2 sm:p-4 md:p-6 lg:p-8'} relative`}>
+        <div className={`mx-auto ${isFullscreen ? 'max-w-4xl px-8 py-6' : 'max-w-5xl'} space-y-4 sm:space-y-6`}>
           {/* Header */}
           {!isFullscreen && (
             <header className="text-center space-y-2">
@@ -289,7 +289,77 @@ export default function ReadBiblePage() {
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Mobile Compact View */}
+                <div className="block md:hidden space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Testament Toggle */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Testament</label>
+                      <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new') => setTestament(value)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent side="bottom" align="start" sideOffset={5}>
+                          <SelectItem value="all">All Books</SelectItem>
+                          <SelectItem value="old">Old Testament</SelectItem>
+                          <SelectItem value="new">New Testament</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Book Selector */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Book</label>
+                      <Select value={selectedBook?.id.toString() || ''} onValueChange={handleBookChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a book" />
+                        </SelectTrigger>
+                        <SelectContent side="bottom" align="start" sideOffset={5} className="max-h-[200px]">
+                          {filteredBooks.map((book) => (
+                            <SelectItem key={book.id} value={book.id.toString()}>
+                              {book.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Chapter Selector */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Chapter</label>
+                      <Select value={selectedChapter.toString()} onValueChange={handleChapterChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent side="bottom" align="start" sideOffset={5} className="max-h-[200px]">
+                          {selectedBook?.chapters.map((chapter) => (
+                            <SelectItem key={chapter} value={chapter.toString()}>
+                              Chapter {chapter}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Navigate</label>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => navigateChapter('prev')} className="flex-1">
+                          <ChevronLeft className="h-4 w-4" />
+                          Prev
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => navigateChapter('next')} className="flex-1">
+                          Next
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop Grid View */}
+                <div className="hidden md:grid md:grid-cols-4 gap-4">
                   {/* Testament Toggle */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Testament</label>
@@ -297,7 +367,7 @@ export default function ReadBiblePage() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent side="bottom" align="start" sideOffset={5}>
                         <SelectItem value="all">All Books</SelectItem>
                         <SelectItem value="old">Old Testament</SelectItem>
                         <SelectItem value="new">New Testament</SelectItem>
@@ -312,7 +382,7 @@ export default function ReadBiblePage() {
                       <SelectTrigger>
                         <SelectValue placeholder="Select a book" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent side="bottom" align="start" sideOffset={5} className="max-h-[300px] overflow-y-auto">
                         {filteredBooks.map((book) => (
                           <SelectItem key={book.id} value={book.id.toString()}>
                             {book.name}
@@ -329,7 +399,7 @@ export default function ReadBiblePage() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent side="bottom" align="start" sideOffset={5} className="max-h-[300px] overflow-y-auto">
                         {selectedBook?.chapters.map((chapter) => (
                           <SelectItem key={chapter} value={chapter.toString()}>
                             Chapter {chapter}
@@ -430,32 +500,32 @@ export default function ReadBiblePage() {
 
           {/* Scripture Content */}
           <Card className="bg-white/98 dark:bg-gray-800/98 backdrop-blur-sm border-amber-200 dark:border-blue-800 shadow-xl">
-            <CardHeader className="text-center pb-8 bg-gradient-to-r from-amber-50 to-sky-50 dark:from-gray-900 dark:to-blue-950 border-b border-amber-200 dark:border-blue-800">
-              <CardTitle className="font-headline text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <CardHeader className="text-center pb-4 sm:pb-8 bg-gradient-to-r from-amber-50 to-sky-50 dark:from-gray-900 dark:to-blue-950 border-b border-amber-200 dark:border-blue-800">
+              <CardTitle className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 {selectedBook?.name}
               </CardTitle>
-              <div className="text-2xl font-semibold text-amber-700 dark:text-amber-300 mb-4">
+              <div className="text-lg sm:text-xl md:text-2xl font-semibold text-amber-700 dark:text-amber-300 mb-2 sm:mb-4">
                 Chapter {selectedChapter}
               </div>
               {selectedBook?.name === 'Genesis' && selectedChapter === 1 && (
-                <div className="text-lg font-medium text-gray-600 dark:text-gray-400 italic">
+                <div className="text-sm sm:text-base md:text-lg font-medium text-gray-600 dark:text-gray-400 italic">
                   "The Beginning"
                 </div>
               )}
             </CardHeader>
-            <CardContent className="p-8 sm:p-12">
+            <CardContent className="p-4 sm:p-6 md:p-8 lg:p-12">
               {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+                <div className="flex items-center justify-center py-8 sm:py-16">
+                  <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-primary"></div>
                 </div>
               ) : (
                 <div className="max-w-4xl mx-auto">
-                  <div className="prose prose-xl prose-gray dark:prose-invert max-w-none" onMouseUp={handleTextSelection}>
-                    <div className="text-xl leading-8 text-gray-900 dark:text-gray-100 font-headline select-text text-justify">
-                      <p className="first-letter:text-7xl first-letter:font-bold first-letter:text-amber-600 dark:first-letter:text-amber-400 first-letter:mr-3 first-letter:float-left first-letter:leading-none first-letter:mt-2 indent-0">
+                  <div className="prose prose-sm sm:prose-base md:prose-lg lg:prose-xl prose-gray dark:prose-invert max-w-none" onMouseUp={handleTextSelection}>
+                    <div className="text-base sm:text-lg md:text-xl leading-6 sm:leading-7 md:leading-8 text-gray-900 dark:text-gray-100 font-headline select-text text-justify">
+                      <p className="first-letter:text-4xl sm:first-letter:text-5xl md:first-letter:text-6xl lg:first-letter:text-7xl first-letter:font-bold first-letter:text-amber-600 dark:first-letter:text-amber-400 first-letter:mr-2 sm:first-letter:mr-3 first-letter:float-left first-letter:leading-none first-letter:mt-1 sm:first-letter:mt-2 indent-0">
                         {verses.map((verse, index) => (
                           <span key={verse.verse}>
-                            <sup className="text-sm font-bold text-amber-600 dark:text-amber-400 mr-1 relative -top-1">
+                            <sup className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 mr-1 relative -top-1">
                               {verse.verse}
                             </sup>
                             {verse.text}
@@ -480,13 +550,15 @@ export default function ReadBiblePage() {
 
           {/* Bottom Navigation */}
           {!isFullscreen && (
-            <div className="flex justify-center items-center gap-4 pb-6">
-              <Button variant="outline" onClick={() => navigateChapter('prev')} disabled={!selectedBook}>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pb-6">
+              <Button variant="outline" onClick={() => navigateChapter('prev')} disabled={!selectedBook} className="w-full sm:w-auto">
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous Chapter
+                <span className="hidden sm:inline">Previous Chapter</span>
+                <span className="sm:hidden">Previous</span>
               </Button>
-              <Button variant="outline" onClick={() => navigateChapter('next')} disabled={!selectedBook}>
-                Next Chapter
+              <Button variant="outline" onClick={() => navigateChapter('next')} disabled={!selectedBook} className="w-full sm:w-auto">
+                <span className="hidden sm:inline">Next Chapter</span>
+                <span className="sm:hidden">Next</span>
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
