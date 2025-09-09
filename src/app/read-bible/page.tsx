@@ -484,7 +484,19 @@ export default function ReadBiblePage() {
 
           {/* Mobile Fullscreen Toggle (In floating button bar at bottom) */}
           {isMobile && !isFullscreen && (
-            <div className="fixed bottom-6 right-6 z-40">
+            <div className="fixed bottom-6 right-6 z-40 flex flex-col items-center gap-3">
+              {/* Divine Reflection Button */}
+              {highlightedText && !reflectionOpen && (
+                <Button
+                  onClick={() => setReflectionOpen(true)}
+                  className="h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-40"
+                  size="icon"
+                  aria-label="Open divine reflection"
+                >
+                  <Heart className="h-4 w-4" />
+                </Button>
+              )}
+              {/* Fullscreen Button */}
               <Button 
                 variant="outline" 
                 size="icon"
@@ -673,15 +685,18 @@ export default function ReadBiblePage() {
         </div>
       </div>
 
-      {/* Floating Action Button */}
-      {highlightedText && !reflectionOpen && (
-        <Button
-          onClick={() => setReflectionOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-40"
-          size="icon"
-        >
-          <Heart className="h-6 w-6" />
-        </Button>
+      {/* Desktop Divine Reflection Button */}
+      {!isMobile && highlightedText && !reflectionOpen && (
+        <div className="fixed bottom-6 right-6 z-40 flex flex-col items-center gap-3">
+          <Button
+            onClick={() => setReflectionOpen(true)}
+            className="h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90"
+            size="icon"
+            aria-label="Open divine reflection"
+          >
+            <Heart className="h-4 w-4" />
+          </Button>
+        </div>
       )}
 
       {/* Reflection Sidebar */}
