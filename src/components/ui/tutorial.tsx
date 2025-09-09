@@ -257,16 +257,10 @@ export function Tutorial({
     const rect = targetRef.current.getBoundingClientRect();
     const pulseAnimation = document.createElement('div');
     pulseAnimation.classList.add('tutorial-pulse-animation');
-    pulseAnimation.style.position = 'fixed';
     pulseAnimation.style.top = `${rect.top}px`;
     pulseAnimation.style.left = `${rect.left}px`;
     pulseAnimation.style.width = `${rect.width}px`;
     pulseAnimation.style.height = `${rect.height}px`;
-    pulseAnimation.style.borderRadius = '8px';
-    pulseAnimation.style.zIndex = '99';
-    pulseAnimation.style.pointerEvents = 'none';
-    pulseAnimation.style.boxShadow = '0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1)';
-    pulseAnimation.style.animation = 'tutorial-pulse 2s infinite';
     document.body.appendChild(pulseAnimation);
     
     return () => {
@@ -316,11 +310,11 @@ export function Tutorial({
         {steps[currentStep]?.target && steps[currentStep]?.position && steps[currentStep]?.position !== 'center' && (
           <div 
             className={cn(
-              "absolute w-4 h-4 bg-inherit transform rotate-45 border border-amber-200 dark:border-amber-800 z-0",
-              steps[currentStep].position === 'top' ? "bottom-[-8px] left-1/2 ml-[-8px] border-b border-r" : "",
-              steps[currentStep].position === 'right' ? "left-[-8px] top-1/2 mt-[-8px] border-l border-t" : "",
-              steps[currentStep].position === 'bottom' ? "top-[-8px] left-1/2 ml-[-8px] border-t border-l" : "",
-              steps[currentStep].position === 'left' ? "right-[-8px] top-1/2 mt-[-8px] border-r border-b" : ""
+              "tutorial-pointer",
+              steps[currentStep].position === 'top' ? "tutorial-pointer-top" : "",
+              steps[currentStep].position === 'right' ? "tutorial-pointer-right" : "",
+              steps[currentStep].position === 'bottom' ? "tutorial-pointer-bottom" : "",
+              steps[currentStep].position === 'left' ? "tutorial-pointer-left" : ""
             )}
           />
         )}

@@ -30,7 +30,7 @@ const AnonymousConfessionalGuidanceOutputSchema = z.object({
   reflection: z
     .string()
     .describe(
-      'AI-generated reflection based on the provided verses. This should be empathetic, pastoral advice drawing from KJV scripture.'
+      'AI-generated reflection based on the provided verses. This should be empathetic, pastoral advice drawing from KJV scripture, concluding with a specific prayer recommendation or act of penance.'
     ),
 });
 export type AnonymousConfessionalGuidanceOutput = z.infer<
@@ -60,7 +60,13 @@ const prompt = ai.definePrompt({
 
   Based *only* on these verses, provide an empathetic and non-judgmental reflection. Your reflection should stay true to the Word of God as presented in the verses. Do not add any new verses.
 
-  Format your response as a heartfelt message of reflection to help the user find peace and resolution.
+  Format your response as a heartfelt message of reflection to help the user find peace and resolution. Conclude your message with:
+
+  1. A specific prayer recommendation that the person can say for repentance
+  2. A gentle invitation to come back to the Lord and continue praying
+  3. A short, practical spiritual action they can take to help them on their path
+
+  Make these recommendations gentle and supportive, not punitive.
   `,
 });
 

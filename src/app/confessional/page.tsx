@@ -257,6 +257,15 @@ export default function ConfessionalPage() {
                                 <p className="whitespace-pre-wrap font-body leading-relaxed">{guidance.reflection}</p>
                             </AlertDescription>
                         </Alert>
+                        <div className="mt-8 bg-accent/5 p-4 rounded-lg border border-accent/20">
+                            <h3 className="font-headline text-sm font-semibold mb-2 text-accent-foreground">
+                                Coming Back to the Lord
+                            </h3>
+                            <p className="text-xs text-accent-foreground/80">
+                                Remember that true confession involves both acknowledging our shortcomings and taking steps toward renewal. 
+                                Consider the prayer and actions recommended above as a way to begin your journey back to spiritual wholeness.
+                            </p>
+                        </div>
                     </CardContent>
                 </Card>
                 

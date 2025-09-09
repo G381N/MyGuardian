@@ -2,73 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Tutorial pointer styles */
-@layer components {
-  .tutorial-pointer {
-    background-color: inherit;
-    position: absolute;
-    width: 1rem;
-    height: 1rem;
-    transform: rotate(45deg);
-    z-index: 0;
-  }
+/* Import tutorial fixes */
+@import '../../components/ui/tutorial-fix.css';
 
-  .tutorial-pointer-top {
-    bottom: -8px;
-    left: 50%;
-    margin-left: -8px;
-    border-bottom: 1px solid;
-    border-right: 1px solid;
-    border-color: rgb(253 230 138 / 1);
-  }
-
-  .tutorial-pointer-right {
-    left: -8px;
-    top: 50%;
-    margin-top: -8px;
-    border-left: 1px solid;
-    border-top: 1px solid;
-    border-color: rgb(253 230 138 / 1);
-  }
-
-  .tutorial-pointer-bottom {
-    top: -8px;
-    left: 50%;
-    margin-left: -8px;
-    border-top: 1px solid;
-    border-left: 1px solid;
-    border-color: rgb(253 230 138 / 1);
-  }
-
-  .tutorial-pointer-left {
-    right: -8px;
-    top: 50%;
-    margin-top: -8px;
-    border-right: 1px solid;
-    border-bottom: 1px solid;
-    border-color: rgb(253 230 138 / 1);
-  }
-
-  .dark .tutorial-pointer-top,
-  .dark .tutorial-pointer-right,
-  .dark .tutorial-pointer-bottom,
-  .dark .tutorial-pointer-left {
-    border-color: rgb(146 64 14 / 1);
-  }
-
-  /* Fix for pulse animation */
-  .tutorial-pulse-animation {
-    position: fixed;
-    border-radius: 8px;
-    z-index: 99;
-    pointer-events: none;
-    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1);
-    animation: tutorial-pulse 2s infinite;
-  }
-}
-
-@layer base {
-  :root {
+:root {
     --background: 255 100% 100%;
     --foreground: 221 83% 11%;
     --card: 206 100% 97%;
@@ -134,43 +71,18 @@
     --sidebar-accent-foreground: 45 60% 92%;
     --sidebar-ring: 45 95% 65%;
   }
+}
 
+@layer base {
   * {
     @apply border-border;
   }
-  
   body {
     @apply bg-background text-foreground;
   }
-  
-  @keyframes tutorial-pulse {
-    0% {
-      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1);
-      opacity: 0.6;
-    }
-    50% {
-      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.4), 0 0 0 6px rgba(245, 158, 11, 0.2);
-      opacity: 0.8;
-    }
-    100% {
-      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1);
-      opacity: 0.6;
-    }
-  }
-  
-  @keyframes tutorial-pulse-dark {
-    0% {
-      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.6), 0 0 0 6px rgba(245, 158, 11, 0.3);
-    }
-    50% {
-      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.7), 0 0 0 8px rgba(245, 158, 11, 0.4);
-    }
-    100% {
-      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.6), 0 0 0 6px rgba(245, 158, 11, 0.3);
-    }
-  }
 }
 
+/* Custom scrollbar hiding for fullscreen Bible reading */
 @layer utilities {
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -209,9 +121,36 @@
     box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 0 0 0 4px rgba(245, 158, 11, 0.2);
   }
   
+  @keyframes tutorial-pulse {
+    0% {
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1);
+      opacity: 0.6;
+    }
+    50% {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.4), 0 0 0 6px rgba(245, 158, 11, 0.2);
+      opacity: 0.8;
+    }
+    100% {
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1);
+      opacity: 0.6;
+    }
+  }
+  
   /* Dark mode pulse animation */
   .dark .tutorial-highlight {
     animation: tutorial-pulse-dark 2s infinite ease-in-out;
+  }
+  
+  @keyframes tutorial-pulse-dark {
+    0% {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.6), 0 0 0 6px rgba(245, 158, 11, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.7), 0 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+    100% {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.6), 0 0 0 6px rgba(245, 158, 11, 0.3);
+    }
   }
   
   /* Ensure tutorial highlighted elements remain visible during tutorial */
