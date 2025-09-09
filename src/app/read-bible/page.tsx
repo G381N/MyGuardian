@@ -247,38 +247,11 @@ export default function ReadBiblePage() {
     }
   }, [isFullscreen, handleFullscreenNavigation]);
 
-  const handleTextSelection = useCallback(async () => {
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
-    
-    if (selectedText && selectedText.length > 10) {
-      setHighlightedText(selectedText);
-      setReflectionOpen(true);
-      await generateReflection(selectedText);
-      
-      // For mobile, clear the selection after capturing to avoid UI issues
-      if (isMobile) {
-        setTimeout(() => {
-          if (selection && selection.removeAllRanges) {
-            selection.removeAllRanges();
-          }
-        }, 500);
-      }
-    }
-  }, [isMobile]);
-  
-  // For mobile touch selection - enhanced for better reliability
-  const handleTouchEnd = useCallback(() => {
-    // Delayed execution to allow selection to complete on mobile
-    setTimeout(() => {
-      handleTextSelection();
-    }, 300); // Increased delay for more reliable selection capture
-  }, [handleTextSelection]);
-
   const generateReflection = async (text: string) => {
     if (!text || !selectedBook) return;
 
     setGeneratingReflection(true);
+    console.log("Generating reflection for:", text);
 
     try {
       const response = await fetch('/api/biblical-reflection', {
@@ -297,6 +270,7 @@ export default function ReadBiblePage() {
       }
 
       const result = await response.json();
+      console.log("Reflection result:", result);
       setReflection(result.reflection);
     } catch (error) {
       console.error('Failed to generate reflection:', error);
@@ -309,6 +283,52 @@ export default function ReadBiblePage() {
       setGeneratingReflection(false);
     }
   };
+
+  const handleTextSelection = useCallback(async () => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString().trim();
+    
+    if (selectedText && selectedText.length > 10) {
+      setHighlightedText(selectedText);
+      setReflectionOpen(true);
+      
+      // Call the API to generate reflection
+      await generateReflection(selectedText);
+      
+      // For mobile, clear the selection after capturing to avoid UI issues
+      if (isMobile) {
+        setTimeout(() => {
+          if (selection && selection.removeAllRanges) {
+            selection.removeAllRanges();
+          }
+        }, 500);
+      }
+    }
+  }, [isMobile, selectedBook, selectedChapter]);
+  
+  // For mobile touch selection - enhanced for better reliability
+  const handleTouchEnd = useCallback(() => {
+    // Delayed execution to allow selection to complete on mobile
+    setTimeout(() => {
+      const selection = window.getSelection();
+      const selectedText = selection?.toString().trim();
+      
+      console.log("Touch selection text:", selectedText);
+      
+      if (selectedText && selectedText.length > 10) {
+        setHighlightedText(selectedText);
+        setReflectionOpen(true);
+        generateReflection(selectedText);
+        
+        // Clear selection after a delay
+        setTimeout(() => {
+          if (selection && selection.removeAllRanges) {
+            selection.removeAllRanges();
+          }
+        }, 300);
+      }
+    }, 300); // Increased delay for more reliable selection capture
+  }, [selectedBook, selectedChapter]);
 
   if (loading && !selectedBook) {
     return (

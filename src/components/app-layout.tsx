@@ -139,7 +139,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs">
-                  v0.04.0
+                  v0.04.1
                 </Badge>
               </div>
               <Button 
