@@ -204,6 +204,22 @@ export default function HowToPrayPage() {
               Discover meaningful ways to connect with God throughout your daily activities. 
               Each context includes guidance and a beautiful prayer to help deepen your spiritual life.
             </p>
+            
+            {/* Disclaimer Card */}
+            <Card className="mx-auto mt-4 max-w-2xl bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800">
+              <CardContent className="pt-4 pb-4">
+                <h3 className="font-headline text-lg font-medium text-amber-800 dark:text-amber-300 mb-2">
+                  A Humble Note
+                </h3>
+                <p className="text-sm text-amber-700 dark:text-amber-400 leading-relaxed">
+                  These prayers are offered as a helpful starting point for those who sometimes struggle to find 
+                  the right words in different situations. There is no "perfect prayer" - the most powerful prayers 
+                  come directly from your heart in your own words. These examples are simply meant to inspire and guide, 
+                  not replace your personal connection with God. Remember that silent prayer, listening, and simply being 
+                  present with God are equally valuable forms of prayer.
+                </p>
+              </CardContent>
+            </Card>
           </header>
 
           {/* Prayer Context Cards */}
@@ -291,13 +307,23 @@ export default function HowToPrayPage() {
 
           {/* Footer */}
           <Card className="bg-gradient-to-r from-rose-100 to-pink-100 dark:from-rose-950/50 dark:to-pink-950/50 border-rose-200 dark:border-rose-800">
-            <CardContent className="pt-6 text-center">
+            <CardContent className="pt-6 pb-6 text-center">
               <p className="text-sm text-rose-800 dark:text-rose-200 leading-relaxed">
                 "Pray without ceasing" - 1 Thessalonians 5:17
               </p>
-              <p className="text-xs text-rose-600 dark:text-rose-400 mt-2">
+              <p className="text-xs text-rose-600 dark:text-rose-400 mt-2 mb-4">
                 Remember, God hears every prayer offered with a sincere heart, in any place, at any time.
               </p>
+              
+              <div className="mt-4 pt-4 border-t border-rose-200 dark:border-rose-800 text-left">
+                <p className="text-xs text-rose-700 dark:text-rose-300 italic">
+                  <strong>About this feature:</strong> MyGuardian offers these prayer examples to assist those who may 
+                  struggle with putting together words in specific scenarios. While these structured prayers can be helpful, 
+                  they are not meant to replace spontaneous, heartfelt prayer. The best prayer is always the one that comes 
+                  genuinely from your heart. Consider these as training wheels that can help you develop your own unique 
+                  prayer style and relationship with God.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
