@@ -5,7 +5,11 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { getTodaysReading, getRandomReading, type DailyReading } from '@/data/daily-readings';
 import { useEffect, useState } from 'react';
-import { RefreshCw, Heart, BookOpen } from 'lucide-react';
+import { RefreshCw, Heart, BookOpen, MessageSquareQuote, Zap } from 'lucide-react';
+import Link from 'next/link';
+
+// Import AboutSection component
+import AboutSection from './about';
 
 export default function HomePage() {
   const [currentReading, setCurrentReading] = useState<DailyReading | null>(null);
@@ -41,12 +45,26 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-sky-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950">
       <div className="p-4 sm:p-6 md:p-8">
         <div className="mx-auto max-w-4xl">
+          {/* Welcome Section */}
+          <div className="text-center mb-12">
+            <h1 className="font-headline text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+              Welcome to MyGuardian
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Your personal companion for spiritual growth, biblical understanding, and divine guidance
+            </p>
+          </div>
+
+          {/* About Section */}
+          <AboutSection />
+
+          {/* Today's Reading Header */}
           <header className="mb-8 text-center">
             <div className="flex items-center justify-center gap-3 mb-4">
               <BookOpen className="h-8 w-8 text-amber-600 dark:text-amber-400" />
-              <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              <h2 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 {isRandom ? "Scripture Reflection" : "Today's Reading"}
-              </h1>
+              </h2>
             </div>
             <p className="text-lg text-muted-foreground">
               {isRandom ? "A moment of divine guidance for your soul" : "Your daily moment of peace and contemplation"}

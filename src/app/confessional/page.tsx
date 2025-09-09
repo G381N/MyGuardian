@@ -6,10 +6,12 @@ import { anonymousConfessionalGuidance } from '@/ai/flows/anonymous-confessional
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mic, Square, Loader2, Wand2, Edit3, BookOpen } from 'lucide-react';
+import { Mic, Square, Loader2, Wand2, Edit3, BookOpen, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { useTutorial } from '@/hooks/use-tutorial';
+import { ConfessionPageTutorial } from '@/components/tutorials';
 
 type RecordingState = 'idle' | 'recording' | 'stopped' | 'transcribing' | 'guiding';
 
@@ -26,6 +28,7 @@ export default function ConfessionalPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
+  const { setActiveTutorial } = useTutorial();
 
   const handleStartRecording = async () => {
     try {
@@ -126,6 +129,16 @@ export default function ConfessionalPage() {
           <p className="mt-2 text-lg text-muted-foreground">
             A private space to unburden your heart. All data is ephemeral and is not stored.
           </p>
+          <div className="mt-2 flex justify-end">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setActiveTutorial("confession-page")}
+              className="h-8 w-8 text-amber-600 hover:bg-amber-100/50"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          </div>
         </header>
 
         <Card>
@@ -185,6 +198,7 @@ export default function ConfessionalPage() {
                   placeholder="Your transcribed confession will appear here..."
                   rows={8}
                   className="resize-none"
+                  data-tutorial="confession-input"
                 />
               )}
               <Button onClick={handleGetGuidance} disabled={isProcessing || !transcription}>
@@ -236,7 +250,7 @@ export default function ConfessionalPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Alert className="border-accent bg-accent/10">
+                        <Alert className="border-accent bg-accent/10" data-tutorial="confession-response">
                             <Wand2 className="h-4 w-4 !text-accent-foreground" />
                             <AlertTitle className="font-headline text-accent-foreground">A Message of Hope</AlertTitle>
                             <AlertDescription className="text-accent-foreground/80">
@@ -245,9 +259,23 @@ export default function ConfessionalPage() {
                         </Alert>
                     </CardContent>
                 </Card>
+                
+                <div className="flex justify-center pt-4" data-tutorial="confession-reset">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setTranscription('');
+                      setGuidance(null);
+                      setAudioDataUri(null);
+                    }}
+                  >
+                    Start New Confession
+                  </Button>
+                </div>
             </div>
         )}
       </div>
+      <ConfessionPageTutorial />
     </div>
   );
 }

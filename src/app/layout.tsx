@@ -3,6 +3,7 @@
 import { AppLayout } from '@/components/app-layout';
 import { Toaster } from '@/components/ui/toaster';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { TutorialProvider } from '@/hooks/use-tutorial';
 import LandingPage from '@/components/landing-page';
 import { useState } from 'react';
 import './globals.css';
@@ -45,9 +46,11 @@ export default function RootLayout({
         {!hasStarted ? (
           <LandingPage onGetStarted={handleGetStarted} />
         ) : (
-          <SidebarProvider>
-            <AppLayout>{children}</AppLayout>
-          </SidebarProvider>
+          <TutorialProvider>
+            <SidebarProvider defaultOpen={true}>
+              <AppLayout>{children}</AppLayout>
+            </SidebarProvider>
+          </TutorialProvider>
         )}
         <Toaster />
       </body>

@@ -99,4 +99,63 @@
   .fullscreen-content:hover {
     cursor: default;
   }
+  
+  /* Tutorial highlight effect */
+  .tutorial-highlight {
+    position: relative;
+    z-index: 102;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease-in-out;
+    outline: none;
+  }
+  
+  /* Light mode highlight */
+  .tutorial-highlight {
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1);
+  }
+  
+  /* Dark mode highlight */
+  .dark .tutorial-highlight {
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4), 0 0 0 4px rgba(245, 158, 11, 0.2);
+  }
+  
+  @keyframes tutorial-pulse {
+    0% {
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1);
+      opacity: 0.6;
+    }
+    50% {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.4), 0 0 0 6px rgba(245, 158, 11, 0.2);
+      opacity: 0.8;
+    }
+    100% {
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3), 0 0 0 4px rgba(245, 158, 11, 0.1);
+      opacity: 0.6;
+    }
+  }
+  
+  /* Dark mode pulse animation */
+  .dark .tutorial-highlight {
+    animation: tutorial-pulse-dark 2s infinite ease-in-out;
+  }
+  
+  @keyframes tutorial-pulse-dark {
+    0% {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.6), 0 0 0 6px rgba(245, 158, 11, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.7), 0 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+    100% {
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.6), 0 0 0 6px rgba(245, 158, 11, 0.3);
+    }
+  }
+  
+  /* Ensure tutorial highlighted elements remain visible during tutorial */
+  .tutorial-highlight {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    display: block !important;
+  }
 }

@@ -6,10 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ChevronDown, ChevronLeft, ChevronRight, Filter, X, Maximize, Minimize, Heart, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
+import { ChevronDown, ChevronLeft, ChevronRight, Filter, X, Maximize, Minimize, Heart, ArrowLeft, ArrowRight, BookOpen, Search, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useTutorial } from '@/hooks/use-tutorial';
+import { BiblePageTutorial } from '@/components/tutorials';
 
 // Define types locally to avoid server import issues
 interface Verse {
@@ -27,6 +32,12 @@ interface Book {
   chapters: number[];
 }
 
+interface Testament {
+  id: string;
+  name: string;
+  books: Book[];
+}
+
 export default function ReadBiblePage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
@@ -41,7 +52,12 @@ export default function ReadBiblePage() {
   const [reflection, setReflection] = useState<string>('');
   const [generatingReflection, setGeneratingReflection] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [bookSelectorOpen, setBookSelectorOpen] = useState(false);
+  const [bookSearchQuery, setBookSearchQuery] = useState('');
+  const [testaments, setTestaments] = useState<Testament[]>([]);
+  const isMobile = useIsMobile();
   const { toast } = useToast();
+  const { setActiveTutorial } = useTutorial();
 
   // Load books on component mount
   useEffect(() => {
@@ -53,6 +69,16 @@ export default function ReadBiblePage() {
         const booksData = await response.json();
         setBooks(booksData);
         setFilteredBooks(booksData);
+        
+        // Organize books by testament
+        const oldTestamentBooks = booksData.filter((book: Book) => book.id < 40);
+        const newTestamentBooks = booksData.filter((book: Book) => book.id >= 40);
+        
+        setTestaments([
+          { id: 'old', name: 'Old Testament', books: oldTestamentBooks },
+          { id: 'new', name: 'New Testament', books: newTestamentBooks }
+        ]);
+        
         if (booksData.length > 0) {
           setSelectedBook(booksData[0]);
         }
@@ -125,7 +151,25 @@ export default function ReadBiblePage() {
     if (book) {
       setSelectedBook(book);
       setSelectedChapter(1);
+      setBookSelectorOpen(false);
     }
+  };
+
+  const handleMobileBookSelect = (book: Book) => {
+    setSelectedBook(book);
+    setSelectedChapter(1);
+    setBookSelectorOpen(false);
+  };
+
+  const getFilteredTestaments = () => {
+    if (!bookSearchQuery.trim()) return testaments;
+    
+    return testaments.map(testament => ({
+      ...testament,
+      books: testament.books.filter(book => 
+        book.name.toLowerCase().includes(bookSearchQuery.toLowerCase())
+      )
+    })).filter(testament => testament.books.length > 0);
   };
 
   const handleChapterChange = (chapter: string) => {
@@ -211,8 +255,25 @@ export default function ReadBiblePage() {
       setHighlightedText(selectedText);
       setReflectionOpen(true);
       await generateReflection(selectedText);
+      
+      // For mobile, clear the selection after capturing to avoid UI issues
+      if (isMobile) {
+        setTimeout(() => {
+          if (selection && selection.removeAllRanges) {
+            selection.removeAllRanges();
+          }
+        }, 500);
+      }
     }
-  }, [selectedBook, selectedChapter]);
+  }, [isMobile]);
+  
+  // For mobile touch selection - enhanced for better reliability
+  const handleTouchEnd = useCallback(() => {
+    // Delayed execution to allow selection to complete on mobile
+    setTimeout(() => {
+      handleTextSelection();
+    }, 300); // Increased delay for more reliable selection capture
+  }, [handleTextSelection]);
 
   const generateReflection = async (text: string) => {
     if (!text || !selectedBook) return;
@@ -262,11 +323,23 @@ export default function ReadBiblePage() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-amber-50 via-white to-sky-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      <div className={`${isFullscreen ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content' : 'p-2 sm:p-4 md:p-6 lg:p-8'} relative`}>
-        <div className={`mx-auto ${isFullscreen ? 'max-w-4xl px-8 py-6' : 'max-w-5xl'} space-y-4 sm:space-y-6`}>
+      <div className={`${isFullscreen ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content' : 'p-4 sm:p-6 md:p-8'} relative`}>
+        <div className={`mx-auto ${isFullscreen ? 'max-w-4xl px-8 py-6' : 'max-w-5xl'} space-y-6`}>
           {/* Header */}
           {!isFullscreen && (
-            <header className="text-center space-y-2">
+            <header className="text-center space-y-2 relative">
+              {/* Fullscreen Toggle Button for Desktop */}
+              {!isMobile && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={toggleFullscreen}
+                  className="absolute left-0 top-1/2 -translate-y-1/2"
+                  aria-label="Toggle fullscreen mode"
+                >
+                  <Maximize className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </Button>
+              )}
               <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 ReadBible
               </h1>
@@ -276,90 +349,20 @@ export default function ReadBiblePage() {
             </header>
           )}
 
-          {/* Filter Bar */}
-          {!isFullscreen && (
+          {/* Filter Bar - Desktop */}
+          {!isFullscreen && !isMobile && (
             <Collapsible open={filterOpen} onOpenChange={setFilterOpen}>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
                   <span className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    Filters & Navigation
+                    <span>Filters & Navigation</span>
                   </span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-4 pt-4">
-                {/* Mobile Compact View */}
-                <div className="block md:hidden space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    {/* Testament Toggle */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Testament</label>
-                      <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new') => setTestament(value)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent side="bottom" align="start" sideOffset={5}>
-                          <SelectItem value="all">All Books</SelectItem>
-                          <SelectItem value="old">Old Testament</SelectItem>
-                          <SelectItem value="new">New Testament</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Book Selector */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Book</label>
-                      <Select value={selectedBook?.id.toString() || ''} onValueChange={handleBookChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a book" />
-                        </SelectTrigger>
-                        <SelectContent side="bottom" align="start" sideOffset={5} className="max-h-[200px]">
-                          {filteredBooks.map((book) => (
-                            <SelectItem key={book.id} value={book.id.toString()}>
-                              {book.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Chapter Selector */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Chapter</label>
-                      <Select value={selectedChapter.toString()} onValueChange={handleChapterChange}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent side="bottom" align="start" sideOffset={5} className="max-h-[200px]">
-                          {selectedBook?.chapters.map((chapter) => (
-                            <SelectItem key={chapter} value={chapter.toString()}>
-                              Chapter {chapter}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Navigation */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Navigate</label>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => navigateChapter('prev')} className="flex-1">
-                          <ChevronLeft className="h-4 w-4" />
-                          Prev
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => navigateChapter('next')} className="flex-1">
-                          Next
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Desktop Grid View */}
-                <div className="hidden md:grid md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
                   {/* Testament Toggle */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Testament</label>
@@ -367,7 +370,11 @@ export default function ReadBiblePage() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent side="bottom" align="start" sideOffset={5}>
+                      <SelectContent 
+                        side="bottom" 
+                        align="start" 
+                        position="item-aligned"
+                      >
                         <SelectItem value="all">All Books</SelectItem>
                         <SelectItem value="old">Old Testament</SelectItem>
                         <SelectItem value="new">New Testament</SelectItem>
@@ -382,7 +389,7 @@ export default function ReadBiblePage() {
                       <SelectTrigger>
                         <SelectValue placeholder="Select a book" />
                       </SelectTrigger>
-                      <SelectContent side="bottom" align="start" sideOffset={5} className="max-h-[300px] overflow-y-auto">
+                      <SelectContent side="bottom" align="start" className="max-h-[300px] overflow-y-auto">
                         {filteredBooks.map((book) => (
                           <SelectItem key={book.id} value={book.id.toString()}>
                             {book.name}
@@ -399,7 +406,12 @@ export default function ReadBiblePage() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent side="bottom" align="start" sideOffset={5} className="max-h-[300px] overflow-y-auto">
+                      <SelectContent 
+                        side="bottom" 
+                        align="start" 
+                        className="max-h-[300px] overflow-y-auto"
+                        position="item-aligned"
+                      >
                         {selectedBook?.chapters.map((chapter) => (
                           <SelectItem key={chapter} value={chapter.toString()}>
                             Chapter {chapter}
@@ -412,12 +424,14 @@ export default function ReadBiblePage() {
                   {/* Navigation */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Navigate</label>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => navigateChapter('prev')}>
-                        <ChevronLeft className="h-4 w-4" />
+                    <div className="flex gap-2 w-full">
+                      <Button variant="outline" size="sm" onClick={() => navigateChapter('prev')} className="flex-1">
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        <span>Previous Chapter</span>
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => navigateChapter('next')}>
-                        <ChevronRight className="h-4 w-4" />
+                      <Button variant="outline" size="sm" onClick={() => navigateChapter('next')} className="flex-1">
+                        <span>Next Chapter</span>
+                        <ChevronRight className="h-4 w-4 ml-2" />
                       </Button>
                     </div>
                   </div>
@@ -425,9 +439,22 @@ export default function ReadBiblePage() {
               </CollapsibleContent>
             </Collapsible>
           )}
+          
+          {/* Mobile Filter Button */}
+          {!isFullscreen && isMobile && (
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => setFilterOpen(true)}
+              className="fixed bottom-6 left-6 h-12 w-12 rounded-full shadow-lg z-40 bg-amber-100/80 dark:bg-amber-900/80 backdrop-blur-sm border border-amber-200 dark:border-amber-700"
+              aria-label="Open filters"
+            >
+              <Filter className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </Button>
+          )}
 
           {/* Current Location Badge */}
-          {selectedBook && (
+          {selectedBook && !isMobile && (
             <div className="flex justify-center">
               <Badge variant="secondary" className="text-base px-4 py-2">
                 {selectedBook.name} {selectedChapter}
@@ -435,12 +462,20 @@ export default function ReadBiblePage() {
             </div>
           )}
 
-          {/* Fullscreen Toggle */}
-          <div className="absolute top-4 right-4">
-            <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
-              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-            </Button>
-          </div>
+          {/* Mobile Fullscreen Toggle (In floating button bar at bottom) */}
+          {isMobile && !isFullscreen && (
+            <div className="fixed bottom-6 right-6 z-40">
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={toggleFullscreen}
+                className="h-12 w-12 rounded-full shadow-lg bg-amber-100/80 dark:bg-amber-900/80 backdrop-blur-sm border border-amber-200 dark:border-amber-700"
+                aria-label="Enter fullscreen mode"
+              >
+                <Maximize className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </Button>
+            </div>
+          )}
 
           {/* Left Navigation Arrow (Fullscreen) */}
           {isFullscreen && (
@@ -471,10 +506,21 @@ export default function ReadBiblePage() {
                   className="flex items-center gap-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Previous Chapter
+                  <span className="hidden sm:inline">Previous Chapter</span>
+                  <span className="sm:hidden">Prev</span>
                 </Button>
                 
                 <div className="flex items-center gap-3">
+                  {isMobile && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setBookSelectorOpen(true)}
+                      className="h-9 w-9"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     size="icon"
@@ -483,6 +529,16 @@ export default function ReadBiblePage() {
                   >
                     <Minimize className="h-4 w-4" />
                   </Button>
+                  {isMobile && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setFilterOpen(true)}
+                      className="h-9 w-9"
+                    >
+                      <Filter className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
                 
                 <Button 
@@ -491,7 +547,8 @@ export default function ReadBiblePage() {
                   disabled={selectedBook?.id === 66 && selectedChapter >= Math.max(...(selectedBook?.chapters || [1]))}
                   className="flex items-center gap-2"
                 >
-                  Next Chapter
+                  <span className="hidden sm:inline">Next Chapter</span>
+                  <span className="sm:hidden">Next</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -500,32 +557,52 @@ export default function ReadBiblePage() {
 
           {/* Scripture Content */}
           <Card className="bg-white/98 dark:bg-gray-800/98 backdrop-blur-sm border-amber-200 dark:border-blue-800 shadow-xl">
-            <CardHeader className="text-center pb-4 sm:pb-8 bg-gradient-to-r from-amber-50 to-sky-50 dark:from-gray-900 dark:to-blue-950 border-b border-amber-200 dark:border-blue-800">
-              <CardTitle className="font-headline text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <CardHeader className="text-center pb-8 bg-gradient-to-r from-amber-50 to-sky-50 dark:from-gray-900 dark:to-blue-950 border-b border-amber-200 dark:border-blue-800">
+              <CardTitle className="font-headline text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 {selectedBook?.name}
               </CardTitle>
-              <div className="text-lg sm:text-xl md:text-2xl font-semibold text-amber-700 dark:text-amber-300 mb-2 sm:mb-4">
+              <div className="text-2xl font-semibold text-amber-700 dark:text-amber-300 mb-4">
                 Chapter {selectedChapter}
               </div>
               {selectedBook?.name === 'Genesis' && selectedChapter === 1 && (
-                <div className="text-sm sm:text-base md:text-lg font-medium text-gray-600 dark:text-gray-400 italic">
+                <div className="text-lg font-medium text-gray-600 dark:text-gray-400 italic">
                   "The Beginning"
                 </div>
               )}
+              <div className="flex justify-end absolute top-4 right-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setActiveTutorial("bible-page")}
+                  className="h-8 w-8 text-amber-600 hover:bg-amber-100/50"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 md:p-8 lg:p-12">
+            <CardContent className="p-8 sm:p-12">
               {loading ? (
-                <div className="flex items-center justify-center py-8 sm:py-16">
-                  <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-primary"></div>
+                <div className="flex items-center justify-center py-16">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
                 </div>
               ) : (
                 <div className="max-w-4xl mx-auto">
-                  <div className="prose prose-sm sm:prose-base md:prose-lg lg:prose-xl prose-gray dark:prose-invert max-w-none" onMouseUp={handleTextSelection}>
-                    <div className="text-base sm:text-lg md:text-xl leading-6 sm:leading-7 md:leading-8 text-gray-900 dark:text-gray-100 font-headline select-text text-justify">
-                      <p className="first-letter:text-4xl sm:first-letter:text-5xl md:first-letter:text-6xl lg:first-letter:text-7xl first-letter:font-bold first-letter:text-amber-600 dark:first-letter:text-amber-400 first-letter:mr-2 sm:first-letter:mr-3 first-letter:float-left first-letter:leading-none first-letter:mt-1 sm:first-letter:mt-2 indent-0">
+                  <div 
+                    className="prose prose-xl prose-gray dark:prose-invert max-w-none selection:bg-amber-100 dark:selection:bg-amber-800/40 selection:text-amber-900 dark:selection:text-amber-100" 
+                    onMouseUp={handleTextSelection}
+                    onTouchEnd={handleTouchEnd}
+                    data-tutorial="scripture-content"
+                  >
+                    <div className="text-xl leading-8 text-gray-900 dark:text-gray-100 font-headline select-text text-justify">
+                      {isMobile && (
+                        <div className="mb-4 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                          <p>Highlight any text to receive AI-powered spiritual insights</p>
+                        </div>
+                      )}
+                      <p className="first-letter:text-7xl first-letter:font-bold first-letter:text-amber-600 dark:first-letter:text-amber-400 first-letter:mr-3 first-letter:float-left first-letter:leading-none first-letter:mt-2 indent-0">
                         {verses.map((verse, index) => (
                           <span key={verse.verse}>
-                            <sup className="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 mr-1 relative -top-1">
+                            <sup className="text-sm font-bold text-amber-600 dark:text-amber-400 mr-1 relative -top-1">
                               {verse.verse}
                             </sup>
                             {verse.text}
@@ -550,16 +627,26 @@ export default function ReadBiblePage() {
 
           {/* Bottom Navigation */}
           {!isFullscreen && (
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pb-6">
-              <Button variant="outline" onClick={() => navigateChapter('prev')} disabled={!selectedBook} className="w-full sm:w-auto">
-                <ChevronLeft className="h-4 w-4 mr-2" />
+            <div className="flex justify-center items-center gap-3 md:gap-4 pb-6" data-tutorial="chapter-navigation">
+              <Button 
+                variant="outline" 
+                onClick={() => navigateChapter('prev')} 
+                disabled={!selectedBook}
+                className="flex items-center justify-center"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="sm:hidden">Prev</span>
                 <span className="hidden sm:inline">Previous Chapter</span>
-                <span className="sm:hidden">Previous</span>
               </Button>
-              <Button variant="outline" onClick={() => navigateChapter('next')} disabled={!selectedBook} className="w-full sm:w-auto">
-                <span className="hidden sm:inline">Next Chapter</span>
+              <Button 
+                variant="outline" 
+                onClick={() => navigateChapter('next')} 
+                disabled={!selectedBook}
+                className="flex items-center justify-center"
+              >
                 <span className="sm:hidden">Next</span>
-                <ChevronRight className="h-4 w-4 ml-2" />
+                <span className="hidden sm:inline">Next Chapter</span>
+                <ChevronRight className="h-4 w-4 ml-1 md:ml-2" />
               </Button>
             </div>
           )}
@@ -624,6 +711,159 @@ export default function ReadBiblePage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Mobile Book Selection Sheet */}
+      <Sheet open={bookSelectorOpen} onOpenChange={setBookSelectorOpen}>
+        <SheetContent side="bottom" className="h-[90vh] sm:h-[80vh] overflow-hidden flex flex-col">
+          <SheetHeader className="px-1">
+            <SheetTitle className="font-headline text-xl">
+              Select a Bible Book
+            </SheetTitle>
+            <div className="relative mt-2">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                type="text" 
+                placeholder="Search books..." 
+                className="pl-8"
+                value={bookSearchQuery}
+                onChange={(e) => setBookSearchQuery(e.target.value)}
+              />
+              {bookSearchQuery && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="absolute right-1 top-1 h-8 w-8 p-0" 
+                  onClick={() => setBookSearchQuery('')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </SheetHeader>
+          
+          <ScrollArea className="flex-1 mt-4 overflow-y-auto pr-4 pb-6">
+            <div className="space-y-6 pb-2" data-tutorial="book-selector">
+              {getFilteredTestaments().map((testament) => (
+                <div key={testament.id} className="space-y-2">
+                  <h3 className="font-semibold text-amber-700 dark:text-amber-300 text-sm uppercase tracking-wider">
+                    {testament.name}
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {testament.books.map((book) => (
+                      <Button
+                        key={book.id}
+                        variant={selectedBook?.id === book.id ? "default" : "outline"}
+                        className="h-auto py-2 justify-start font-normal text-sm"
+                        onClick={() => handleMobileBookSelect(book)}
+                      >
+                        {book.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              
+              {getFilteredTestaments().length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                  No books found matching "{bookSearchQuery}"
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+      
+      {/* Mobile Filter Sheet */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="left" className="w-[300px] sm:w-[350px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="font-headline text-xl flex items-center gap-2">
+              <Filter className="h-5 w-5 text-amber-600" />
+              Bible Filters
+            </SheetTitle>
+          </SheetHeader>
+          <div className="space-y-6 mt-8">
+            {/* Testament Toggle */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Testament</label>
+              <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new') => setTestament(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="bottom" align="start" position="popper">
+                  <SelectItem value="all">All Books</SelectItem>
+                  <SelectItem value="old">Old Testament</SelectItem>
+                  <SelectItem value="new">New Testament</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Book Selector */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Book</label>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setFilterOpen(false);
+                  setTimeout(() => setBookSelectorOpen(true), 300);
+                }}
+                className="w-full justify-between"
+              >
+                <span>{selectedBook?.name || "Select a book"}</span>
+                <BookOpen className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+
+            {/* Chapter Selector */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Chapter</label>
+              <Select value={selectedChapter.toString()} onValueChange={handleChapterChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="bottom" align="start" position="popper" className="max-h-[200px] overflow-y-auto">
+                  {selectedBook?.chapters.map((chapter) => (
+                    <SelectItem key={chapter} value={chapter.toString()}>
+                      {chapter}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="space-y-2 pt-4">
+              <label className="text-sm font-medium">Navigate</label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    navigateChapter('prev');
+                    setFilterOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  <span>Previous</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    navigateChapter('next');
+                    setFilterOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+      {/* Tutorial */}
+      <BiblePageTutorial />
     </div>
   );
 }
