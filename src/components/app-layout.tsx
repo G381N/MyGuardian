@@ -89,7 +89,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center p-4 relative">
             <button 
               onClick={toggleSidebar}
-              className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
+              className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-all duration-200 hover:border-amber-300 dark:hover:border-amber-600"
               aria-label={open ? "Close sidebar" : "Open sidebar"}
             >
               <Cross className="h-6 w-6 text-amber-600 dark:text-amber-400" />
@@ -111,25 +111,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       isActive={pathname === item.href}
                       className={`
                         sidebar-menu-button
-                        group relative h-auto p-3 rounded-xl transition-all duration-200
+                        group relative h-auto p-3 rounded-xl transition-all duration-250 ease-out
                         ${pathname === item.href 
                           ? 'bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 shadow-sm' 
-                          : 'hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border hover:border-amber-100 dark:hover:border-amber-800'
+                          : 'hover:bg-gradient-to-r hover:from-amber-50/70 hover:to-orange-50/70 dark:hover:from-amber-950/20 dark:hover:to-orange-950/20 border border-transparent hover:border-amber-200/50 dark:hover:border-amber-700/50 hover:shadow-sm hover:scale-[1.01]'
                         }
                       `}
                       tooltip={{ children: item.label, side: 'right', align: 'center' }}
                       data-tutorial={item.tutorialAttr}
                     >
                       <div className="flex items-center gap-3 w-full">
-                        <div className={`p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 ${item.color}`}>
-                          <item.icon className="h-4 w-4" />
+                        <div className={`p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-250 group-hover:shadow-md group-hover:scale-105 ${item.color}`}>
+                          <item.icon className="h-4 w-4 transition-transform duration-250 group-hover:scale-110" />
                         </div>
                         <div className="flex flex-col items-start min-w-0 flex-1">
-                          <span className="font-medium text-gray-900 dark:text-white text-sm truncate">{item.label}</span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate w-full">{item.description}</span>
+                          <span className="font-medium text-gray-900 dark:text-white text-sm truncate transition-colors duration-250 group-hover:text-amber-700 dark:group-hover:text-amber-300">{item.label}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 truncate w-full transition-colors duration-250 group-hover:text-amber-600 dark:group-hover:text-amber-400">{item.description}</span>
                         </div>
                         {pathname === item.href && (
-                          <div className="h-2 w-2 rounded-full bg-amber-500 dark:bg-amber-400" />
+                          <div className="h-2 w-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
                         )}
                       </div>
                     </SidebarMenuButton>
@@ -141,29 +141,29 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
 
         <SidebarFooter className="border-t border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/50">
-          <div className="p-4 space-y-3">
+          <div className="p-3 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs">
+                <Sparkles className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs px-2 py-0.5">
                   v5.0.0
                 </Badge>
               </div>
               <Button 
                 variant="outline" 
                 size="sm"
-                className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/30 flex items-center gap-1.5"
+                className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/30 flex items-center gap-1.5 transition-all duration-200 hover:border-amber-300 dark:hover:border-amber-600 h-7 px-2 text-xs"
                 onClick={(e) => handleTutorialClick(e)}
               >
-                <HelpCircle className="h-4 w-4" />
+                <HelpCircle className="h-3 w-3" />
                 Tutorial
               </Button>
             </div>
             <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
               <p className="font-medium">🔒 Completely Anonymous</p>
-              <p>No data stored • Privacy guaranteed</p>
-              <div className="pt-2">
-                <Link href="/" className="text-amber-600 dark:text-amber-400 hover:underline">About My Journey</Link>
+              <p className="text-xs">No data stored • Privacy guaranteed</p>
+              <div className="pt-1">
+                <Link href="/about" className="text-amber-600 dark:text-amber-400 hover:underline text-xs">About My Journey</Link>
               </div>
             </div>
           </div>
@@ -175,7 +175,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             <button 
               onClick={toggleSidebar}
-              className="h-9 w-9 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
+              className="h-9 w-9 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-all duration-200 hover:border-amber-300 dark:hover:border-amber-600"
             >
               <Cross className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </button>
@@ -186,7 +186,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Button 
             variant="outline" 
             size="sm"
-            className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/30 flex items-center gap-1.5"
+            className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/30 flex items-center gap-1.5 transition-all duration-200 hover:border-amber-300 dark:hover:border-amber-600"
             onClick={(e) => handleTutorialClick(e)}
           >
             <HelpCircle className="h-4 w-4" />
@@ -202,7 +202,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {!open && (
         <button
           onClick={toggleSidebar}
-          className="hidden md:flex fixed top-4 left-4 z-50 p-2.5 rounded-full bg-amber-100/90 dark:bg-amber-900/70 border border-amber-200 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-all duration-200 shadow-md backdrop-blur-sm items-center justify-center"
+          className="hidden md:flex fixed top-4 left-4 z-50 p-2.5 rounded-full bg-amber-100/90 dark:bg-amber-900/70 border border-amber-200 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-all duration-200 shadow-md backdrop-blur-sm items-center justify-center hover:border-amber-300 dark:hover:border-amber-600"
           aria-label="Open sidebar"
         >
           <Cross className="h-5 w-5 text-amber-600 dark:text-amber-400" />

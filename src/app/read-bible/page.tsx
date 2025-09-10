@@ -533,14 +533,86 @@ export default function ReadBiblePage() {
         />
       )}
       
+      {/* PC top navigation bar in fullscreen mode */}
+      {isFullscreen && !isMobile && (
+        <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 dark:bg-gray-900/95 border-b border-amber-200 dark:border-amber-800 backdrop-blur-md shadow-lg">
+          <div className="h-full flex items-center justify-between px-6 max-w-7xl mx-auto">
+            {/* Left section - Book info */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBookSelectorOpen(true)}
+                className="flex items-center gap-2 rounded-lg text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30"
+              >
+                <BookOpen className="h-4 w-4" />
+                <span className="font-medium">{selectedBook?.name}</span>
+              </Button>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-amber-700 dark:text-amber-300 font-headline">
+                  Chapter
+                </span>
+                <span className="text-2xl font-bold text-amber-600 dark:text-amber-400 font-headline">
+                  {selectedChapter}
+                </span>
+              </div>
+            </div>
+            
+            {/* Center section - Actions */}
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSearchOpen(true)}
+                className="rounded-lg text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30"
+                title="Search Scripture"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReflectionOpen(true)}
+                className="rounded-lg text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30"
+                title="AI Reflection"
+              >
+                <Heart className="h-4 w-4" />
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFilterOpen(true)}
+                className="rounded-lg text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30"
+                title="Chapter Options"
+              >
+                <Filter className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Right section - Exit */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsFullscreen(false)}
+              className="rounded-lg text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
+            >
+              <Minimize className="h-4 w-4" />
+              <span>Exit Fullscreen</span>
+            </Button>
+          </div>
+        </div>
+      )}
+      
       {/* Navigation hints for mobile fullscreen mode */}
       <NavigationHints isFullscreen={isFullscreen} isMobile={isMobile} />
       
       {/* We removed the duplicate mobile bottom navigation - keeping only the original bottom navbar */}
       
-      <div className={`${isFullscreen ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content pt-[40px] pb-16' : 'p-4 sm:p-6 md:p-8'} relative`}>
+      <div className={`${isFullscreen ? (isMobile ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content pt-[48px] pb-16' : 'h-screen overflow-y-auto scrollbar-hide fullscreen-content pt-16 pb-20') : 'p-4 sm:p-6 md:p-8'} relative`}>
         <div className={`mx-auto ${isFullscreen ? 'max-w-full sm:max-w-4xl md:max-w-5xl lg:max-w-6xl px-0' : 'max-w-5xl'} ${isFullscreen ? '' : 'space-y-6'}`}>
-          {/* Header */}
+          {/* Header - Hidden in fullscreen mode */}
           {!isFullscreen && (
             <header className="text-center space-y-2 relative">
               {/* Fullscreen Toggle Button for Desktop */}
@@ -549,7 +621,7 @@ export default function ReadBiblePage() {
                   variant="ghost" 
                   size="icon" 
                   onClick={toggleFullscreen}
-                  className="absolute left-0 top-1/2 -translate-y-1/2"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 bg-amber-50/80 hover:bg-amber-100 dark:bg-amber-900/50 dark:hover:bg-amber-800/70 border border-amber-200 dark:border-amber-700 transition-all duration-300 hover:scale-105 hover:shadow-lg"
                   aria-label="Toggle fullscreen mode"
                 >
                   <Maximize className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -577,7 +649,7 @@ export default function ReadBiblePage() {
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-4 pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                   {/* Testament Toggle */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Testament</label>
@@ -635,21 +707,6 @@ export default function ReadBiblePage() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* Navigation */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Navigate</label>
-                    <div className="flex gap-2 w-full">
-                      <Button variant="outline" size="sm" onClick={() => navigateChapter('prev')} className="flex-1">
-                        <ChevronLeft className="h-4 w-4 mr-2" />
-                        <span>Previous Chapter</span>
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => navigateChapter('next')} className="flex-1">
-                        <span>Next Chapter</span>
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -666,15 +723,6 @@ export default function ReadBiblePage() {
             >
               <Filter className="h-5 w-5" />
             </Button>
-          )}
-
-          {/* Current Location Badge */}
-          {selectedBook && !isMobile && (
-            <div className="flex justify-center">
-              <Badge variant="secondary" className="text-base px-4 py-2">
-                {selectedBook.name} {selectedChapter}
-              </Badge>
-            </div>
           )}
 
           {/* Mobile Fullscreen Toggle (In floating button bar at bottom) */}
@@ -724,113 +772,46 @@ export default function ReadBiblePage() {
             />
           )}
           
-          {/* Bottom Navigation Bar (Fullscreen) for Desktop - Enhanced Design */}
+          {/* Bottom Navigation Bar (Fullscreen) for Desktop - Simplified Navigation Only */}
           {isFullscreen && !isMobile && (
             <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
-              <div className="flex items-center gap-3 py-3 px-6 bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl border border-amber-200/50 dark:border-amber-800/50 backdrop-blur-lg max-w-fit mx-auto">
+              <div className="flex items-center gap-4 py-3 px-6 bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl border border-amber-200/50 dark:border-amber-800/50 backdrop-blur-lg">
                 {/* Navigation Section */}
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigateChapter('prev')}
-                    disabled={selectedBook?.id === 1 && selectedChapter === 1}
-                    className="flex items-center gap-2 rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 px-4"
-                    size="sm"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    <span>Previous</span>
-                  </Button>
-                  
-                  {/* Current Location Display */}
-                  <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/30 rounded-xl border border-amber-200 dark:border-amber-800">
-                    <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                      {selectedBook?.name} {selectedChapter}
-                    </span>
-                  </div>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={() => navigateChapter('next')}
-                    disabled={selectedBook?.id === 66 && selectedChapter >= Math.max(...(selectedBook?.chapters || [1]))}
-                    className="flex items-center gap-2 rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 px-4"
-                    size="sm"
-                  >
-                    <span>Next</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                {/* Divider */}
-                <div className="w-px h-8 bg-amber-200 dark:bg-amber-800"></div>
-                
-                {/* Action Buttons Section */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setBookSelectorOpen(true)}
-                    className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
-                    title="Select Book"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    <span className="hidden lg:inline">Book</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSearchOpen(true)} 
-                    className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
-                    title="Search Scripture"
-                  >
-                    <Search className="h-4 w-4" />
-                    <span className="hidden lg:inline">Search</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setReflectionOpen(true)}
-                    className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
-                    title="AI Reflection"
-                  >
-                    <Heart className="h-4 w-4" />
-                    <span className="hidden lg:inline">Reflect</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFilterOpen(true)}
-                    className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
-                    title="Chapter Options"
-                  >
-                    <Filter className="h-4 w-4" />
-                    <span className="hidden lg:inline">Options</span>
-                  </Button>
-                </div>
-                
-                {/* Divider */}
-                <div className="w-px h-8 bg-amber-200 dark:bg-amber-800"></div>
-                
-                {/* Exit Fullscreen */}
                 <Button 
                   variant="outline" 
+                  onClick={() => navigateChapter('prev')}
+                  disabled={selectedBook?.id === 1 && selectedChapter === 1}
+                  className="flex items-center gap-2 rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 px-4"
                   size="sm"
-                  onClick={() => setIsFullscreen(false)}
-                  className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
-                  title="Exit Fullscreen"
                 >
-                  <Minimize className="h-4 w-4" />
-                  <span className="hidden lg:inline">Exit</span>
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Previous</span>
+                </Button>
+                
+                {/* Current Location Display */}
+                <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/30 rounded-xl border border-amber-200 dark:border-amber-800">
+                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                    {selectedBook?.name} {selectedChapter}
+                  </span>
+                </div>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => navigateChapter('next')}
+                  disabled={selectedBook?.id === 66 && selectedChapter >= Math.max(...(selectedBook?.chapters || [1]))}
+                  className="flex items-center gap-2 rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 px-4"
+                  size="sm"
+                >
+                  <span>Next</span>
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           )}
 
           {/* Scripture Content */}
-          <Card className={`bg-white/98 dark:bg-gray-800/98 backdrop-blur-sm border-amber-200 dark:border-blue-800 shadow-xl ${isFullscreen ? 'mt-0 border-t-0 rounded-t-none' : ''}`}>
-            <CardContent className={`${isFullscreen ? 'p-4 sm:p-8 pt-3' : 'p-8 sm:p-12'}`}>
+          <Card className={`bg-white/98 dark:bg-gray-800/98 backdrop-blur-sm border-amber-200 dark:border-blue-800 shadow-xl ${isFullscreen ? 'mt-4 mx-4 sm:mx-8 border rounded-xl' : ''}`}>
+            <CardContent className={`${isFullscreen ? 'p-6 sm:p-8 md:p-10' : 'p-8 sm:p-12'}`}>
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -1029,7 +1010,7 @@ export default function ReadBiblePage() {
       </Sheet>
       
       {/* Mobile Filter Sheet */}
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+      <Sheet open={filterOpen && isMobile} onOpenChange={setFilterOpen}>
         <SheetContent side="left" className="w-[300px] sm:w-[350px] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="font-headline text-xl flex items-center gap-2">

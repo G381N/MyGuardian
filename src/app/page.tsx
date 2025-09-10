@@ -8,9 +8,6 @@ import { useEffect, useState } from 'react';
 import { RefreshCw, Heart, BookOpen, MessageSquareQuote, Zap } from 'lucide-react';
 import Link from 'next/link';
 
-// Import AboutSection component
-import AboutSection from './about';
-
 export default function HomePage() {
   const [currentReading, setCurrentReading] = useState<DailyReading | null>(null);
   const [isRandom, setIsRandom] = useState(false);
@@ -54,9 +51,6 @@ export default function HomePage() {
               Your personal companion for spiritual growth, biblical understanding, and divine guidance
             </p>
           </div>
-
-          {/* About Section */}
-          <AboutSection />
 
           {/* Today's Reading Header */}
           <header className="mb-8 text-center">

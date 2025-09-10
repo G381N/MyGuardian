@@ -29,6 +29,13 @@
     0% { background-color: rgb(133 77 14); }
     100% { background-color: transparent; }
   }
+  
+  /* Prevent layout shifts in sidebar navigation */
+  .sidebar-menu-button {
+    border: 1px solid transparent;
+    box-shadow: 0 0 0 0 transparent;
+    transform: translateZ(0); /* Force GPU acceleration for smooth animations */
+  }
 }
 
 /* Tutorial pointer styles */
