@@ -52,25 +52,50 @@ export function Tutorial({
     }
   }, [tutorialKey, onOpenChange, open]);
   
-  // Reset hasClosedRef when tutorial is opened
+  // Reset hasClosedRef when tutorial is opened and set up listeners
   React.useEffect(() => {
     if (open) {
       hasClosedRef.current = false;
+      
+      // Add a click listener to the document to help with handling outside clicks
+      const handleOutsideClick = (e: MouseEvent) => {
+        // Only check outside clicks after a small delay from opening
+        if (initialOpenRef.current) {
+          // If clicked outside the tutorial card, don't immediately close
+          // Let the standard closing mechanisms handle it
+          e.stopPropagation();
+        }
+      };
+      
+      // Add listener with capture to intercept early
+      document.addEventListener('click', handleOutsideClick, true);
+      
+      return () => {
+        document.removeEventListener('click', handleOutsideClick, true);
+      };
     }
   }, [open]);
   
   // Set tutorial as completed
   const completeTutorial = React.useCallback(() => {
+    // Mark tutorial as completed in localStorage
     if (tutorialKey && typeof window !== 'undefined') {
       localStorage.setItem(`tutorial-${tutorialKey}`, 'true');
     }
     
+    // Trigger onComplete callback if provided
     if (onComplete) {
       onComplete();
     }
     
+    // Mark as closed to prevent immediate reopening
     hasClosedRef.current = true;
-    onOpenChange(false);
+    
+    // Add a small delay before actually closing the tutorial
+    // This helps prevent event bubbling issues
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 100);
   }, [onComplete, onOpenChange, tutorialKey]);
   
   // Use refs to prevent unnecessary re-renders
@@ -78,12 +103,36 @@ export function Tutorial({
   const targetRef = React.useRef<HTMLElement | null>(null);
   const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
   
+  // Track if we're in an initial open state
+  const initialOpenRef = React.useRef(false);
+  
+  // Prevent tutorial from closing immediately when opened
+  React.useEffect(() => {
+    if (open && !initialOpenRef.current) {
+      initialOpenRef.current = true;
+      
+      // This delay prevents the tutorial from being closed by any click events
+      // that might have triggered its opening
+      const preventCloseTimeout = setTimeout(() => {
+        hasClosedRef.current = false; // Reset the closed state explicitly
+      }, 500);
+      
+      return () => clearTimeout(preventCloseTimeout);
+    } else if (!open) {
+      // Reset when closed
+      initialOpenRef.current = false;
+    }
+  }, [open]);
+  
   // Find target element and position tutorial card
   React.useEffect(() => {
     if (!open) return;
     
     // Set a timeout to ensure the tutorial stays open long enough for users to see it
-    const stayOpenTimeout = setTimeout(() => {}, 300); // Keep component mounted
+    const stayOpenTimeout = setTimeout(() => {
+      // Actually do something in this timeout to ensure it works
+      setHasShown(true);
+    }, 300);
     
     if (!steps[currentStep]?.target) {
       // If no target, center in viewport with safer positioning

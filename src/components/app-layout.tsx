@@ -71,9 +71,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { toggleSidebar, open } = useSidebar();
   const { setActiveTutorial, resetTutorials } = useTutorial();
 
-  const handleTutorialClick = () => {
-    setActiveTutorial("getting-started");
-  };
+  const handleTutorialClick = React.useCallback((event: React.MouseEvent) => {
+    // Prevent event propagation to avoid any parent click handlers
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Small delay to ensure any click events are fully processed
+    setTimeout(() => {
+      setActiveTutorial("getting-started");
+    }, 50);
+  }, [setActiveTutorial]);
 
   return (
     <>
@@ -139,14 +146,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <Badge variant="secondary" className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs">
-                  v0.04.3
+                  v5.0.0
                 </Badge>
               </div>
               <Button 
                 variant="outline" 
                 size="sm"
                 className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/30 flex items-center gap-1.5"
-                onClick={handleTutorialClick}
+                onClick={(e) => handleTutorialClick(e)}
               >
                 <HelpCircle className="h-4 w-4" />
                 Tutorial
@@ -180,7 +187,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             variant="outline" 
             size="sm"
             className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-700 dark:hover:bg-amber-900/30 flex items-center gap-1.5"
-            onClick={handleTutorialClick}
+            onClick={(e) => handleTutorialClick(e)}
           >
             <HelpCircle className="h-4 w-4" />
             Tutorial

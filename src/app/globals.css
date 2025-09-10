@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom utility classes */
+@layer utilities {
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .search-highlight {
+    animation: highlightFade 3s ease-in-out;
+  }
+  
+  @keyframes highlightFade {
+    0% { background-color: rgb(254 240 138); }
+    100% { background-color: transparent; }
+  }
+  
+  .dark .search-highlight {
+    animation: highlightFadeDark 3s ease-in-out;
+  }
+  
+  @keyframes highlightFadeDark {
+    0% { background-color: rgb(133 77 14); }
+    100% { background-color: transparent; }
+  }
+}
+
 /* Tutorial pointer styles */
 @layer components {
   .tutorial-pointer {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBooks, getChapter, getTestamentBooks } from '@/services/scripture';
+import { getBooks, getChapter, getTestamentBooks, searchVerses } from '@/services/scripture';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,10 +8,16 @@ export async function GET(request: NextRequest) {
     const bookId = searchParams.get('bookId');
     const chapter = searchParams.get('chapter');
     const testament = searchParams.get('testament');
+    const query = searchParams.get('query');
 
     if (action === 'books') {
       const books = await getBooks();
       return NextResponse.json(books);
+    }
+
+    if (action === 'search' && query) {
+      const results = await searchVerses(query);
+      return NextResponse.json(results);
     }
 
     if (action === 'testament-books' && testament) {

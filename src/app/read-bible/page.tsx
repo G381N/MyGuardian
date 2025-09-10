@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronDown, ChevronLeft, ChevronRight, Filter, X, Maximize, Minimize, Heart, ArrowLeft, ArrowRight, BookOpen, Search, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -15,6 +16,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTutorial } from '@/hooks/use-tutorial';
 import { BiblePageTutorial } from '@/components/tutorials';
+import { MobileBibleReader } from '@/components/mobile-bible-reader';
+import { MobileBibleTopNav } from '@/components/mobile-bible-top-nav';
+import { NavigationHints } from '@/components/navigation-hints';
+import { Verse } from '@/components/ui/verse';
 
 // Define types locally to avoid server import issues
 interface Verse {
@@ -54,6 +59,10 @@ export default function ReadBiblePage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [bookSelectorOpen, setBookSelectorOpen] = useState(false);
   const [bookSearchQuery, setBookSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Verse[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [testaments, setTestaments] = useState<Testament[]>([]);
   const isMobile = useIsMobile();
   const { toast } = useToast();
@@ -210,6 +219,36 @@ export default function ReadBiblePage() {
     setIsFullscreen(!isFullscreen);
   };
 
+  // Handle keyboard navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement> | globalThis.KeyboardEvent) => {
+    // Only process if not in an input field
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+    
+    // Active dialogs/overlays should prevent navigation
+    if (filterOpen || bookSelectorOpen || reflectionOpen) return;
+
+    if (e.key === 'ArrowRight') {
+      navigateChapter('next');
+      e.preventDefault(); // Prevent scroll
+    } else if (e.key === 'ArrowLeft') {
+      navigateChapter('prev');
+      e.preventDefault(); // Prevent scroll
+    } else if (e.key === 'Escape' && isFullscreen) {
+      setIsFullscreen(false);
+      e.preventDefault();
+    }
+  }, [navigateChapter, isFullscreen, filterOpen, bookSelectorOpen, reflectionOpen]);
+
+  // Add keyboard event listener
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown as any);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown as any);
+    };
+  }, [handleKeyDown]);
+
+  // For fullscreen navigation via mouse clicks
   const handleFullscreenNavigation = useCallback((e: MouseEvent) => {
     if (!isFullscreen) return;
     
@@ -284,11 +323,36 @@ export default function ReadBiblePage() {
     }
   };
 
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const handleTextSelection = useCallback(async () => {
     const selection = window.getSelection();
     const selectedText = selection?.toString().trim();
     
     if (selectedText && selectedText.length > 10) {
+      // Check if the selection is within scripture content
+      let isValidSelection = false;
+      
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const selectionNode = range.commonAncestorContainer;
+        
+        // Find the scripture content container
+        const scriptureContainer = document.querySelector('.scripture-content');
+        
+        // Check if the selection is within the scripture content
+        if (scriptureContainer && 
+            (scriptureContainer.contains(selectionNode) || 
+             scriptureContainer.contains(selectionNode.parentElement))) {
+          isValidSelection = true;
+        }
+      }
+      
+      if (!isValidSelection) {
+        console.log("Selection outside scripture content - ignoring");
+        return;
+      }
+      
       setHighlightedText(selectedText);
       setReflectionOpen(true);
       
@@ -304,7 +368,7 @@ export default function ReadBiblePage() {
         }, 500);
       }
     }
-  }, [isMobile, selectedBook, selectedChapter]);
+  }, [isMobile, generateReflection]);
   
   // For mobile touch selection - enhanced for better reliability
   const handleTouchEnd = useCallback(() => {
@@ -313,9 +377,30 @@ export default function ReadBiblePage() {
       const selection = window.getSelection();
       const selectedText = selection?.toString().trim();
       
-      console.log("Touch selection text:", selectedText);
-      
       if (selectedText && selectedText.length > 10) {
+        // Check if the selection is within scripture content
+        let isValidSelection = false;
+        
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const selectionNode = range.commonAncestorContainer;
+          
+          // Find the scripture content container
+          const scriptureContainer = document.querySelector('.scripture-content');
+          
+          // Check if the selection is within the scripture content
+          if (scriptureContainer && 
+              (scriptureContainer.contains(selectionNode) || 
+               scriptureContainer.contains(selectionNode.parentElement))) {
+            isValidSelection = true;
+          }
+        }
+        
+        if (!isValidSelection) {
+          console.log("Touch selection outside scripture content - ignoring");
+          return;
+        }
+        
         setHighlightedText(selectedText);
         setReflectionOpen(true);
         generateReflection(selectedText);
@@ -328,7 +413,102 @@ export default function ReadBiblePage() {
         }, 300);
       }
     }, 300); // Increased delay for more reliable selection capture
-  }, [selectedBook, selectedChapter]);
+  }, [generateReflection]);
+
+  // Search function
+  const performSearch = async (query: string) => {
+    if (!query.trim() || query.trim().length < 2) {
+      toast({
+        title: "Search Error",
+        description: "Please enter at least 2 characters to search.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchResults([]);
+
+    try {
+      const response = await fetch(`/api/scripture?action=search&query=${encodeURIComponent(query.trim())}`);
+      if (!response.ok) throw new Error('Search failed');
+      
+      const results = await response.json();
+      setSearchResults(results);
+      
+      if (results.length === 0) {
+        toast({
+          title: "No Results",
+          description: "No verses found matching your search query.",
+        });
+      } else {
+        toast({
+          title: "Search Complete",
+          description: `Found ${results.length} verse${results.length === 1 ? '' : 's'} matching "${query}".`,
+        });
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      toast({
+        title: "Search Error",
+        description: "Failed to search scripture. Please try again.",
+        variant: "destructive",
+      });
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Navigate to a specific verse from search results
+  const navigateToVerse = (verse: Verse) => {
+    const targetBook = books.find(book => book.id === verse.bookId);
+    if (targetBook) {
+      setSelectedBook(targetBook);
+      setSelectedChapter(verse.chapter);
+      setSearchOpen(false);
+      
+      // Scroll to the specific verse after a short delay
+      setTimeout(() => {
+        const verseElement = document.querySelector(`[data-verse="${verse.verse}"]`);
+        if (verseElement) {
+          verseElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight the verse temporarily
+          verseElement.classList.add('search-highlight');
+          setTimeout(() => {
+            verseElement.classList.remove('search-highlight');
+          }, 3000);
+        }
+      }, 500);
+      
+      toast({
+        title: "Navigated to Verse",
+        description: `${verse.book} ${verse.chapter}:${verse.verse}`,
+      });
+    }
+  };
+
+  // Handler for tutorial button with debounce to prevent flickering
+  const handleTutorialClick = useCallback((event?: React.MouseEvent) => {
+    // Prevent default and stop propagation if event is provided
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Prevent multiple rapid clicks with a timeout
+    const tutorialId = "bible-page";
+    
+    // Small delay to ensure event handling is complete
+    setTimeout(() => {
+      setActiveTutorial(tutorialId);
+      
+      // Store in session that we've clicked the tutorial button
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("tutorial-clicked", "true");
+      }
+    }, 50);
+  }, [setActiveTutorial]);
 
   if (loading && !selectedBook) {
     return (
@@ -343,8 +523,23 @@ export default function ReadBiblePage() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-amber-50 via-white to-sky-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-950 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-      <div className={`${isFullscreen ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content' : 'p-4 sm:p-6 md:p-8'} relative`}>
-        <div className={`mx-auto ${isFullscreen ? 'max-w-4xl px-8 py-6' : 'max-w-5xl'} space-y-6`}>
+      {/* Mobile top navigation bar in fullscreen mode */}
+      {isFullscreen && isMobile && (
+        <MobileBibleTopNav 
+          bookName={selectedBook?.name || ''}
+          chapterNumber={selectedChapter}
+          chapterTitle={selectedBook?.name === 'Genesis' && selectedChapter === 1 ? 'The Beginning' : undefined}
+          onTutorialClick={handleTutorialClick}
+        />
+      )}
+      
+      {/* Navigation hints for mobile fullscreen mode */}
+      <NavigationHints isFullscreen={isFullscreen} isMobile={isMobile} />
+      
+      {/* We removed the duplicate mobile bottom navigation - keeping only the original bottom navbar */}
+      
+      <div className={`${isFullscreen ? 'h-screen overflow-y-auto scrollbar-hide fullscreen-content pt-[40px] pb-16' : 'p-4 sm:p-6 md:p-8'} relative`}>
+        <div className={`mx-auto ${isFullscreen ? 'max-w-full sm:max-w-4xl md:max-w-5xl lg:max-w-6xl px-0' : 'max-w-5xl'} ${isFullscreen ? '' : 'space-y-6'}`}>
           {/* Header */}
           {!isFullscreen && (
             <header className="text-center space-y-2 relative">
@@ -466,10 +661,10 @@ export default function ReadBiblePage() {
               variant="outline" 
               size="icon"
               onClick={() => setFilterOpen(true)}
-              className="fixed bottom-6 left-6 h-12 w-12 rounded-full shadow-lg z-40 bg-amber-100/80 dark:bg-amber-900/80 backdrop-blur-sm border border-amber-200 dark:border-amber-700"
+              className="fixed bottom-6 left-6 h-12 w-12 rounded-full shadow-lg z-40 bg-amber-50/90 dark:bg-amber-900/90 backdrop-blur-sm border border-amber-200 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-800/80"
               aria-label="Open filters"
             >
-              <Filter className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <Filter className="h-5 w-5" />
             </Button>
           )}
 
@@ -489,7 +684,7 @@ export default function ReadBiblePage() {
               {highlightedText && !reflectionOpen && (
                 <Button
                   onClick={() => setReflectionOpen(true)}
-                  className="h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-40"
+                  className="h-10 w-10 rounded-full shadow-lg bg-amber-500/90 hover:bg-amber-600/90 z-40 text-white dark:text-amber-50"
                   size="icon"
                   aria-label="Open divine reflection"
                 >
@@ -501,129 +696,141 @@ export default function ReadBiblePage() {
                 variant="outline" 
                 size="icon"
                 onClick={toggleFullscreen}
-                className="h-12 w-12 rounded-full shadow-lg bg-amber-100/80 dark:bg-amber-900/80 backdrop-blur-sm border border-amber-200 dark:border-amber-700"
+                className="h-12 w-12 rounded-full shadow-lg bg-amber-50/90 dark:bg-amber-900/90 backdrop-blur-sm border border-amber-200 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-800/80"
                 aria-label="Enter fullscreen mode"
               >
-                <Maximize className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <Maximize className="h-5 w-5" />
               </Button>
             </div>
           )}
 
-          {/* Left Navigation Arrow (Fullscreen) */}
-          {isFullscreen && (
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-              <Button variant="ghost" size="icon" onClick={() => navigateChapter('prev')}>
-                <ArrowLeft className="h-6 w-6" />
-              </Button>
-            </div>
-          )}
+          {/* Left and Right Navigation Arrows - REMOVED to prevent duplication with NavigationHints */}
 
-          {/* Right Navigation Arrow (Fullscreen) */}
-          {isFullscreen && (
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
-              <Button variant="ghost" size="icon" onClick={() => navigateChapter('next')}>
-                <ArrowRight className="h-6 w-6" />
-              </Button>
-            </div>
+          {/* Mobile Bible Reader Component - Floating Bottom Navbar */}
+          {isFullscreen && isMobile && (
+            <MobileBibleReader
+              currentBook={selectedBook?.name || ''}
+              currentChapter={selectedChapter}
+              onPrevious={() => navigateChapter('prev')}
+              onNext={() => navigateChapter('next')}
+              isFullscreen={isFullscreen}
+              toggleFullscreen={toggleFullscreen}
+              canGoPrevious={!(selectedBook?.id === 1 && selectedChapter === 1)}
+              canGoNext={!(selectedBook?.id === 66 && selectedChapter === 22)}
+              onFilterOpen={() => setFilterOpen(true)}
+              onBookSelect={() => setBookSelectorOpen(true)}
+              onAIFeature={() => setReflectionOpen(true)}
+              onSearch={() => setSearchOpen(true)}
+            />
           )}
-
-          {/* Bottom Navigation Bar (Fullscreen) */}
-          {isFullscreen && (
-            <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-amber-200 dark:border-blue-800 p-4 z-20">
-              <div className="flex items-center justify-between max-w-4xl mx-auto">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigateChapter('prev')}
-                  disabled={selectedBook?.id === 1 && selectedChapter === 1}
-                  className="flex items-center gap-2"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline">Previous Chapter</span>
-                  <span className="sm:hidden">Prev</span>
-                </Button>
-                
-                <div className="flex items-center gap-3">
-                  {isMobile && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setBookSelectorOpen(true)}
-                      className="h-9 w-9"
-                    >
-                      <BookOpen className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {/* Divine Reflection Button in Fullscreen */}
-                  {highlightedText && !reflectionOpen && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setReflectionOpen(true)}
-                      className="h-9 w-9 bg-amber-50 dark:bg-amber-900/50 border-amber-200 dark:border-amber-700"
-                    >
-                      <Heart className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                    </Button>
-                  )}
+          
+          {/* Bottom Navigation Bar (Fullscreen) for Desktop - Enhanced Design */}
+          {isFullscreen && !isMobile && (
+            <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center">
+              <div className="flex items-center gap-3 py-3 px-6 bg-white/95 dark:bg-gray-900/95 rounded-2xl shadow-2xl border border-amber-200/50 dark:border-amber-800/50 backdrop-blur-lg max-w-fit mx-auto">
+                {/* Navigation Section */}
+                <div className="flex items-center gap-2">
                   <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setIsFullscreen(false)}
-                    className="h-9 w-9"
+                    variant="outline" 
+                    onClick={() => navigateChapter('prev')}
+                    disabled={selectedBook?.id === 1 && selectedChapter === 1}
+                    className="flex items-center gap-2 rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 px-4"
+                    size="sm"
                   >
-                    <Minimize className="h-4 w-4" />
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Previous</span>
                   </Button>
-                  {isMobile && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setFilterOpen(true)}
-                      className="h-9 w-9"
-                    >
-                      <Filter className="h-4 w-4" />
-                    </Button>
-                  )}
+                  
+                  {/* Current Location Display */}
+                  <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/30 rounded-xl border border-amber-200 dark:border-amber-800">
+                    <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                      {selectedBook?.name} {selectedChapter}
+                    </span>
+                  </div>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => navigateChapter('next')}
+                    disabled={selectedBook?.id === 66 && selectedChapter >= Math.max(...(selectedBook?.chapters || [1]))}
+                    className="flex items-center gap-2 rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 px-4"
+                    size="sm"
+                  >
+                    <span>Next</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
                 </div>
                 
+                {/* Divider */}
+                <div className="w-px h-8 bg-amber-200 dark:bg-amber-800"></div>
+                
+                {/* Action Buttons Section */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBookSelectorOpen(true)}
+                    className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
+                    title="Select Book"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span className="hidden lg:inline">Book</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSearchOpen(true)} 
+                    className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
+                    title="Search Scripture"
+                  >
+                    <Search className="h-4 w-4" />
+                    <span className="hidden lg:inline">Search</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setReflectionOpen(true)}
+                    className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
+                    title="AI Reflection"
+                  >
+                    <Heart className="h-4 w-4" />
+                    <span className="hidden lg:inline">Reflect</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFilterOpen(true)}
+                    className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
+                    title="Chapter Options"
+                  >
+                    <Filter className="h-4 w-4" />
+                    <span className="hidden lg:inline">Options</span>
+                  </Button>
+                </div>
+                
+                {/* Divider */}
+                <div className="w-px h-8 bg-amber-200 dark:bg-amber-800"></div>
+                
+                {/* Exit Fullscreen */}
                 <Button 
                   variant="outline" 
-                  onClick={() => navigateChapter('next')}
-                  disabled={selectedBook?.id === 66 && selectedChapter >= Math.max(...(selectedBook?.chapters || [1]))}
-                  className="flex items-center gap-2"
+                  size="sm"
+                  onClick={() => setIsFullscreen(false)}
+                  className="rounded-xl text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/30 flex items-center gap-2"
+                  title="Exit Fullscreen"
                 >
-                  <span className="hidden sm:inline">Next Chapter</span>
-                  <span className="sm:hidden">Next</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <Minimize className="h-4 w-4" />
+                  <span className="hidden lg:inline">Exit</span>
                 </Button>
               </div>
             </div>
           )}
 
           {/* Scripture Content */}
-          <Card className="bg-white/98 dark:bg-gray-800/98 backdrop-blur-sm border-amber-200 dark:border-blue-800 shadow-xl">
-            <CardHeader className="text-center pb-8 bg-gradient-to-r from-amber-50 to-sky-50 dark:from-gray-900 dark:to-blue-950 border-b border-amber-200 dark:border-blue-800">
-              <CardTitle className="font-headline text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                {selectedBook?.name}
-              </CardTitle>
-              <div className="text-2xl font-semibold text-amber-700 dark:text-amber-300 mb-4">
-                Chapter {selectedChapter}
-              </div>
-              {selectedBook?.name === 'Genesis' && selectedChapter === 1 && (
-                <div className="text-lg font-medium text-gray-600 dark:text-gray-400 italic">
-                  "The Beginning"
-                </div>
-              )}
-              <div className="flex justify-end absolute top-4 right-4">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveTutorial("bible-page")}
-                  className="h-8 w-8 text-amber-600 hover:bg-amber-100/50"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-8 sm:p-12">
+          <Card className={`bg-white/98 dark:bg-gray-800/98 backdrop-blur-sm border-amber-200 dark:border-blue-800 shadow-xl ${isFullscreen ? 'mt-0 border-t-0 rounded-t-none' : ''}`}>
+            <CardContent className={`${isFullscreen ? 'p-4 sm:p-8 pt-3' : 'p-8 sm:p-12'}`}>
               {loading ? (
                 <div className="flex items-center justify-center py-16">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -631,20 +838,22 @@ export default function ReadBiblePage() {
               ) : (
                 <div className="max-w-4xl mx-auto">
                   <div 
-                    className="prose prose-xl prose-gray dark:prose-invert max-w-none selection:bg-amber-100 dark:selection:bg-amber-800/40 selection:text-amber-900 dark:selection:text-amber-100" 
+                    className="prose prose-xl prose-gray dark:prose-invert max-w-none selection:bg-amber-100 dark:selection:bg-amber-800/40 selection:text-amber-900 dark:selection:text-amber-100 scripture-content" 
                     onMouseUp={handleTextSelection}
                     onTouchEnd={handleTouchEnd}
                     data-tutorial="scripture-content"
+                    ref={contentRef}
                   >
                     <div className="text-xl leading-8 text-gray-900 dark:text-gray-100 font-headline select-text text-justify">
-                      {isMobile && (
-                        <div className="mb-4 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                      {/* Only show hint text if not in fullscreen mode */}
+                      {isMobile && !isFullscreen && (
+                        <div className="mb-4 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800" data-ui-element="true">
                           <p>Highlight any text to receive AI-powered spiritual insights</p>
                         </div>
                       )}
                       <p className="first-letter:text-7xl first-letter:font-bold first-letter:text-amber-600 dark:first-letter:text-amber-400 first-letter:mr-3 first-letter:float-left first-letter:leading-none first-letter:mt-2 indent-0">
                         {verses.map((verse, index) => (
-                          <span key={verse.verse}>
+                          <span key={verse.verse} data-verse={verse.verse}>
                             <sup className="text-sm font-bold text-amber-600 dark:text-amber-400 mr-1 relative -top-1">
                               {verse.verse}
                             </sup>
@@ -697,11 +906,11 @@ export default function ReadBiblePage() {
       </div>
 
       {/* Desktop Divine Reflection Button */}
-      {!isMobile && highlightedText && !reflectionOpen && (
+      {!isMobile && !isFullscreen && highlightedText && !reflectionOpen && (
         <div className="fixed bottom-6 right-6 z-40 flex flex-col items-center gap-3">
           <Button
             onClick={() => setReflectionOpen(true)}
-            className="h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90"
+            className="h-10 w-10 rounded-full shadow-lg bg-amber-500 hover:bg-amber-600 text-white"
             size="icon"
             aria-label="Open divine reflection"
           >
@@ -910,6 +1119,122 @@ export default function ReadBiblePage() {
       </Sheet>
       {/* Tutorial */}
       <BiblePageTutorial />
+      
+      {/* Search Dialog */}
+      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col mx-4 sm:mx-0">
+          <DialogHeader>
+            <DialogTitle className="text-center font-headline flex items-center justify-center gap-2">
+              <Search className="h-5 w-5 text-amber-600" />
+              Search Scripture
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4 flex-1 overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Input
+                placeholder="Try: love, faith, psalm 23, john 3:16..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim().length > 1) {
+                    performSearch(searchQuery);
+                  }
+                }}
+                disabled={isSearching}
+              />
+              <Button 
+                onClick={() => performSearch(searchQuery)}
+                disabled={isSearching || searchQuery.trim().length < 2}
+                className="bg-amber-600 hover:bg-amber-700 w-full sm:w-auto"
+              >
+                {isSearching ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : (
+                  <Search className="h-4 w-4 mr-2" />
+                )}
+                Search
+              </Button>
+            </div>
+            
+            {/* Quick search examples */}
+            {!isSearching && searchResults.length === 0 && searchQuery.trim().length === 0 && (
+              <div className="space-y-3">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="font-medium mb-2">Quick search examples:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['love', 'faith and hope', 'psalm 23', 'john 3:16', '"be still"'].map((example) => (
+                      <button
+                        key={example}
+                        onClick={() => {
+                          setSearchQuery(example);
+                          performSearch(example);
+                        }}
+                        className="px-3 py-1 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="flex-1 overflow-hidden">
+                <div className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Found {searchResults.length} result{searchResults.length === 1 ? '' : 's'}:
+                </div>
+                <ScrollArea className="h-72 sm:h-80">
+                  <div className="space-y-3 pr-4">
+                    {searchResults.map((verse, index) => (
+                      <div
+                        key={`${verse.bookId}-${verse.chapter}-${verse.verse}`}
+                        className="p-3 border border-amber-200 dark:border-amber-800 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer transition-colors"
+                        onClick={() => navigateToVerse(verse)}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                            {verse.book} {verse.chapter}:{verse.verse}
+                          </span>
+                          <Button variant="ghost" size="sm" className="text-xs p-1 h-auto">
+                            Go to verse →
+                          </Button>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 leading-relaxed">
+                          {verse.text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+            
+            {isSearching && (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto mb-4"></div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Searching scripture...</p>
+                </div>
+              </div>
+            )}
+            
+            {!isSearching && searchResults.length === 0 && searchQuery.trim().length > 0 && (
+              <div className="text-center py-8">
+                <Search className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  No verses found for "{searchQuery}"
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  Try different keywords or check your spelling
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

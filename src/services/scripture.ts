@@ -159,14 +159,86 @@ export async function searchVerses(query: string): Promise<Verse[]> {
     return [];
   }
 
-  const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 2);
+  const normalizedQuery = query.toLowerCase().trim();
+  
+  // Check if query is a specific verse reference (e.g., "john 3:16", "psalm 23:1")
+  const verseRefMatch = normalizedQuery.match(/^(\w+)\s*(\d+):(\d+)$/);
+  if (verseRefMatch) {
+    const [, bookName, chapterStr, verseStr] = verseRefMatch;
+    const chapterNum = parseInt(chapterStr);
+    const verseNum = parseInt(verseStr);
+    
+    const specificVerse = verses.find(v => 
+      v.book.toLowerCase().includes(bookName) && 
+      v.chapter === chapterNum && 
+      v.verse === verseNum
+    );
+    
+    return specificVerse ? [specificVerse] : [];
+  }
+  
+  // Check if query is a chapter reference (e.g., "psalm 23", "john 3")
+  const chapterRefMatch = normalizedQuery.match(/^(\w+)\s*(\d+)$/);
+  if (chapterRefMatch) {
+    const [, bookName, chapterStr] = chapterRefMatch;
+    const chapterNum = parseInt(chapterStr);
+    
+    const chapterVerses = verses.filter(v => 
+      v.book.toLowerCase().includes(bookName) && 
+      v.chapter === chapterNum
+    );
+    
+    if (chapterVerses.length > 0) {
+      return chapterVerses.slice(0, 20); // Limit to first 20 verses of chapter
+    }
+  }
+
+  // Regular text search
+  const searchTerms = normalizedQuery.split(' ').filter(term => term.length > 1);
+  
+  if (searchTerms.length === 0) {
+    return [];
+  }
   
   const results = verses.filter(verse => {
-      const verseText = verse.text.toLowerCase();
-      return searchTerms.some(term => verseText.includes(term));
+    const verseText = verse.text.toLowerCase();
+    const bookName = verse.book.toLowerCase();
+    
+    // Exact phrase search if query is in quotes
+    if (normalizedQuery.startsWith('"') && normalizedQuery.endsWith('"')) {
+      const phrase = normalizedQuery.slice(1, -1);
+      return verseText.includes(phrase);
+    }
+    
+    // Multiple term search - all terms must be present
+    if (searchTerms.length > 1) {
+      return searchTerms.every(term => 
+        verseText.includes(term) || bookName.includes(term)
+      );
+    }
+    
+    // Single term search
+    const term = searchTerms[0];
+    return verseText.includes(term) || bookName.includes(term);
   });
 
-  return results.slice(0, 50); // Limit results to avoid overload
+  // Sort results by relevance
+  const sortedResults = results.sort((a, b) => {
+    const aText = a.text.toLowerCase();
+    const bText = b.text.toLowerCase();
+    
+    // Prioritize exact matches
+    const aExact = searchTerms.some(term => aText.includes(term));
+    const bExact = searchTerms.some(term => bText.includes(term));
+    
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+    
+    // Then by book order
+    return a.bookId - b.bookId || a.chapter - b.chapter || a.verse - b.verse;
+  });
+
+  return sortedResults.slice(0, 50); // Limit results to avoid overload
 }
 
 export async function getBooks(): Promise<Book[]> {
