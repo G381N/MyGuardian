@@ -129,6 +129,19 @@ export default function ConfessionalPage() {
           <p className="mt-2 text-lg text-muted-foreground">
             A private space to unburden your heart. All data is ephemeral and is not stored.
           </p>
+          
+          {/* Important Disclaimer */}
+          <Alert className="mt-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50">
+            <AlertTitle className="text-amber-800 dark:text-amber-200 font-semibold">
+              Important Notice
+            </AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-300 text-sm">
+              This is not an actual sacramental confession. This is a private spiritual tool designed to help you 
+              express your thoughts and begin the process of repentance. For sacramental confession, please visit 
+              a priest or clergy member in your faith tradition.
+            </AlertDescription>
+          </Alert>
+          
           <div className="mt-2 flex justify-end">
             <Button
               variant="ghost"

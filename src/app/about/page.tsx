@@ -53,7 +53,7 @@ export default function AboutPage() {
                 </div>
                 
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mx-auto">
-                  Hello everyone, my name is <strong>Jebin</strong>. I am from Bangalore, India, and this is a small 
+                  Hello everyone, my name is <strong>Gebin</strong>. I am from Bangalore, India, and this is a small 
                   project that I built for myself to ask questions, read the Bible, and become a bit closer to God.
                 </p>
               </div>
@@ -70,10 +70,7 @@ export default function AboutPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                It all started when I started hearing songs from Forest Frank, and then I saw lots of clips 
-                of this series called <em>The Chosen</em>. I really wanted to watch this and went ahead and 
-                watched the series. After watching this, it got me to repent and understand where I lack, 
-                and I wanted to get closer to God.
+                It all started when I started hearing songs from Forest Frank, and then I watched the series <em>The Chosen</em>. After watching this, it got me to repent and understand where I lack, and I wanted to get closer to God.
               </p>
               
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -125,27 +122,6 @@ export default function AboutPage() {
             </CardContent>
           </Card>
 
-          {/* Technology Stack */}
-          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-amber-200 dark:border-blue-800 shadow-xl">
-            <CardHeader>
-              <CardTitle className="font-headline text-2xl flex items-center gap-2">
-                <Coffee className="h-6 w-6 text-amber-600" />
-                Built With Love & Technology
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  'Next.js 15', 'React 18', 'TypeScript', 'Tailwind CSS',
-                  'Google AI', 'Radix UI', 'Node.js', 'Firebase Genkit'
-                ].map((tech) => (
-                  <div key={tech} className="text-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                    <span className="text-sm font-medium text-amber-700 dark:text-amber-300">{tech}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Personal Message */}
           <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/50 border-amber-200 dark:border-amber-800 shadow-xl">
@@ -155,10 +131,7 @@ export default function AboutPage() {
                   A Personal Message
                 </h3>
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed italic">
-                  "This app is something which I made to contribute to the world in this small way because I know 
-                  that I cannot contribute in such a big way. This is my small contribution where I use the technologies 
-                  and the things I have studied to improve lives of people who really need this application. 
-                  I hope my app helps people with getting the answers they need from the Word of God."
+                  "This app is just a small effort from my side, hoping it can help someone out there who needs guidance or comfort from the Word of God. I simply used what I know to make something that might make a difference for someone. May it be useful to you on your journey."
                 </p>
                 <p className="text-amber-700 dark:text-amber-300 font-medium">
                   May God show you the light and show you the things that you need so that you may have a wonderful journey. 🙏
@@ -170,7 +143,7 @@ export default function AboutPage() {
           {/* Footer */}
           <div className="text-center py-8">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Created with ❤️ by Jebin George for the glory of God • Version 5.0.0
+              Created with ❤️ by Gebin George for the glory of God • Version 5.0.0
             </p>
           </div>
         </div>

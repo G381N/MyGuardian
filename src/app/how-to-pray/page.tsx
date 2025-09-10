@@ -17,7 +17,8 @@ import {
   ChevronDown,
   Copy,
   Share,
-  Heart
+  Heart,
+  Stethoscope
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -138,6 +139,40 @@ Whatever the outcome, help me to remember that my worth comes from being Your be
 Bless all others who face this same challenge. May we support one another and compete or test with fairness and respect.
 
 Through Jesus Christ our Lord. Amen.`
+  },
+  {
+    id: 'sickness',
+    title: 'For Sickness and Healing',
+    icon: Stethoscope,
+    description: 'Prayers for health, healing, and comfort during illness',
+    guide: 'Whether praying for yourself or others during times of sickness, approach God with faith and trust in His healing power. Remember that healing comes in many forms - physical, emotional, and spiritual. Offer your concerns to the Great Physician, asking for His will to be done and His strength to sustain you or your loved ones through difficult times.',
+    prayer: `Choose your prayer focus:
+
+**For Someone Else Who Is Sick:**
+
+Merciful Father, I lift up [Name] to You in their time of illness and need. You are the source of all healing and comfort, and I ask for Your healing touch upon their body, mind, and spirit.
+
+Grant them relief from pain and discomfort. Strengthen their immune system and help their body to heal according to Your will. Give them patience during this difficult time and surround them with Your peace that surpasses all understanding.
+
+Bless the medical professionals caring for them with wisdom and skill. Comfort their family and friends, and help us all to be sources of encouragement and support.
+
+If it is Your will, restore them to full health. If You have other plans, grant them grace to face whatever comes with faith and courage, knowing that You are always with them.
+
+Through Jesus Christ, our Great Physician. Amen.
+
+**For Yourself When You Are Sick:**
+
+Lord Jesus, You know my pain and my struggles with this illness. I come to You seeking Your healing touch and Your comfort in this difficult time.
+
+Please ease my suffering and help my body to heal. Give me strength when I feel weak, hope when I feel discouraged, and peace when anxiety tries to overwhelm me.
+
+Help me to trust in Your love and care, even when I don't understand why this is happening. Use this experience to draw me closer to You and to teach me what You want me to learn.
+
+Bless those who are caring for me - doctors, nurses, family, and friends. Help me to be patient and grateful, even in my discomfort.
+
+Whether You choose to heal me quickly or ask me to walk through this valley longer, help me to glorify You in my response. Your will be done, Lord.
+
+Through Your holy name I pray. Amen.`
   }
 ];
 

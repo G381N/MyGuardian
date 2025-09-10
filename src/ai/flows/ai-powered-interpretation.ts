@@ -19,7 +19,7 @@ const AnalyzeScriptureInputSchema = z.object({
 export type AnalyzeScriptureInput = z.infer<typeof AnalyzeScriptureInputSchema>;
 
 const AnalyzeScriptureOutputSchema = z.object({
-  interpretation: z.string().describe('The AI-powered interpretation of the scripture passage in relation to the user input.'),
+  explanation: z.string().describe('A clear, contextual explanation of what the scripture passage means, including historical context and biblical references.'),
 });
 export type AnalyzeScriptureOutput = z.infer<typeof AnalyzeScriptureOutputSchema>;
 
@@ -30,15 +30,24 @@ export async function analyzeScripture(input: AnalyzeScriptureInput): Promise<An
 const analyzeScripturePrompt = ai.definePrompt({
   name: 'analyzeScripturePrompt',
   input: {schema: AnalyzeScriptureInputSchema},
-  output: {schema: AnalyzeScriptureOutputSchema},
-  prompt: `You are a helpful AI assistant that analyzes scripture passages in relation to user inputs to provide deeper insights and understanding.
+  output: {schema: z.object({explanation: AnalyzeScriptureOutputSchema.shape.explanation})},
+  prompt: `You are a helpful biblical scholar providing clear, accessible explanations of scripture passages. Your goal is to help users understand what the text means in simple terms.
 
   Passage: {{{passage}}}
   User Input: {{{userInput}}}
 
-  Provide an interpretation of the passage in relation to the user input.
-  The interpretation should be insightful and provide a deeper understanding of the passage in the context of the user's input.
-  Interpretation: `,
+  Provide a clear explanation that:
+  - Explains the meaning of the passage in simple, easy-to-understand language
+  - Provides historical or cultural context when relevant (e.g., if "Cana" is mentioned, explain the wedding at Cana)
+  - References other biblical events or locations mentioned in the passage
+  - Clarifies difficult or archaic language from the King James Version
+  - Explains who the people mentioned are and their significance
+  - Does NOT add new interpretations or personal meanings
+  - Focuses on helping the reader understand what actually happened or what the text actually says
+
+  If the passage references other biblical events, briefly explain those connections to help understanding.
+  
+  Explanation: `,
 });
 
 const analyzeScriptureFlow = ai.defineFlow(
@@ -49,6 +58,6 @@ const analyzeScriptureFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await analyzeScripturePrompt(input);
-    return output!;
+    return { explanation: output!.explanation };
   }
 );

@@ -18,7 +18,9 @@ export async function POST(request: NextRequest) {
       context,
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({ 
+      reflection: result.explanation // Keep "reflection" for backward compatibility with frontend
+    });
   } catch (error) {
     console.error('Biblical reflection API error:', error);
     return NextResponse.json(
