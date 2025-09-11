@@ -71,6 +71,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { toggleSidebar, open } = useSidebar();
   const { setActiveTutorial, resetTutorials } = useTutorial();
 
+  const handleAppNameClick = React.useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    // Clear the started flag to show the landing page
+    localStorage.removeItem('myguardian-started');
+    // Reload the page to trigger the layout logic
+    window.location.reload();
+  }, []);
+
   const handleTutorialClick = React.useCallback((event: React.MouseEvent) => {
     // Prevent event propagation to avoid any parent click handlers
     event.preventDefault();
@@ -94,10 +102,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             >
               <Cross className="h-6 w-6 text-amber-600 dark:text-amber-400" />
             </button>
-            <Link href="/" className="flex flex-col ml-3 hover:opacity-80 transition-opacity">
+            <button onClick={handleAppNameClick} className="flex flex-col ml-3 hover:opacity-80 transition-opacity text-left">
               <h1 className="font-headline text-xl font-bold text-gray-900 dark:text-white">MyGuardian</h1>
               <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Your Spiritual Companion</p>
-            </Link>
+            </button>
           </div>
         </SidebarHeader>
         
@@ -179,9 +187,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             >
               <Cross className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </button>
-            <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <button onClick={handleAppNameClick} className="flex items-center hover:opacity-80 transition-opacity">
               <h1 className="font-headline text-lg font-bold text-gray-900 dark:text-white">MyGuardian</h1>
-            </Link>
+            </button>
           </div>
           <Button 
             variant="outline" 
