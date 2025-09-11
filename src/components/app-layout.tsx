@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { TutorialProvider, useTutorial } from '@/hooks/use-tutorial';
+import { useLandingPage } from '@/hooks/use-landing-page';
 import { GettingStartedTutorial } from '@/components/tutorials';
 
 const navItems = [
@@ -70,14 +71,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { toggleSidebar, open } = useSidebar();
   const { setActiveTutorial, resetTutorials } = useTutorial();
+  const { goToLandingPage } = useLandingPage();
 
   const handleAppNameClick = React.useCallback((event: React.MouseEvent) => {
     event.preventDefault();
-    // Clear the started flag to show the landing page
-    localStorage.removeItem('myguardian-started');
-    // Reload the page to trigger the layout logic
-    window.location.reload();
-  }, []);
+    goToLandingPage();
+  }, [goToLandingPage]);
 
   const handleTutorialClick = React.useCallback((event: React.MouseEvent) => {
     // Prevent event propagation to avoid any parent click handlers
