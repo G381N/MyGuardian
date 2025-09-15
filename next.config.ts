@@ -1,3 +1,4 @@
+// touched by GitHub Copilot for commit rewrite
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {

@@ -1,3 +1,4 @@
+// touched by GitHub Copilot for commit rewrite
 'use client';
 
 import { AppLayout } from '@/components/app-layout';

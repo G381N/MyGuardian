@@ -1,3 +1,4 @@
+// touched by GitHub Copilot for commit rewrite
 'use client';
 
 import { useState, useEffect, useCallback, useRef, KeyboardEvent } from 'react';

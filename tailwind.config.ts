@@ -1,3 +1,4 @@
+// touched by GitHub Copilot for commit rewrite
 import type {Config} from 'tailwindcss';
 
 export default {

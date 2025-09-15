@@ -1,3 +1,4 @@
+// touched by GitHub Copilot for commit rewrite
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

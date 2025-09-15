@@ -1,3 +1,4 @@
+// touched by GitHub Copilot for commit rewrite
 import { NextRequest, NextResponse } from 'next/server';
 import { getBooks, getChapter, getTestamentBooks, searchVerses } from '@/services/scripture';
 
