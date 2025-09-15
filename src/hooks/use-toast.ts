@@ -1,4 +1,3 @@
-// touched by GitHub Copilot for commit rewrite
 // made by gebin george
 "use client"
 
