@@ -80,3 +80,5 @@ Visit http://localhost:9002 to view the application.
 - **ENHANCED**: Highlight-to-reflection feature with floating action button
 - **REFINED**: Navigation and filtering capabilities
 - **UPDATED**: Theme improvements for light and dark modes
+
+this application was made for people who are coming back to faith, and also for people who are not Christians, who would like to experience a confession like experience.
