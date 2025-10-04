@@ -1,10 +1,10 @@
-// touched by GitHub Copilot for commit rewrite
+// made by gebin george
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, Bot, MessageSquareQuote, Book, Heart, Cross, Sparkles, Zap, X, HelpCircle } from 'lucide-react';
+import { BookOpen, Bot, MessageSquareQuote, Book, Heart, Cross, Sparkles, Zap, X, HelpCircle, Flower2 } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -58,6 +58,13 @@ const navItems = [
     color: "text-green-600 dark:text-green-400",
     tutorialId: "bible-page",
     tutorialAttr: "bible-nav"
+  },
+  { 
+    href: '/rosary', 
+    icon: Flower2, 
+    label: 'Rosary Guidance',
+    description: "Guided meditation & prayers",
+    color: "text-rose-600 dark:text-rose-400"
   },
   { 
     href: '/how-to-pray', 

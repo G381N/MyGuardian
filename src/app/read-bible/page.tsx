@@ -1,4 +1,4 @@
-// touched by GitHub Copilot for commit rewrite
+// made by gebin george
 'use client';
 
 import { useState, useEffect, useCallback, useRef, KeyboardEvent } from 'react';
@@ -950,7 +950,7 @@ export default function ReadBiblePage() {
       </Sheet>
 
       {/* Mobile Book Selection Sheet */}
-      <Sheet open={bookSelectorOpen} onOpenChange={setBookSelectorOpen}>
+      <Sheet open={bookSelectorOpen && isMobile} onOpenChange={setBookSelectorOpen}>
         <SheetContent side="bottom" className="h-[90vh] sm:h-[80vh] overflow-hidden flex flex-col">
           <SheetHeader className="px-1">
             <SheetTitle className="font-headline text-xl">
@@ -980,25 +980,28 @@ export default function ReadBiblePage() {
           
           <ScrollArea className="flex-1 mt-4 overflow-y-auto pr-4 pb-6">
             <div className="space-y-6 pb-2" data-tutorial="book-selector">
-              {getFilteredTestaments().map((testament) => (
-                <div key={testament.id} className="space-y-2">
-                  <h3 className="font-semibold text-amber-700 dark:text-amber-300 text-sm uppercase tracking-wider">
-                    {testament.name}
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {testament.books.map((book) => (
-                      <Button
-                        key={book.id}
-                        variant={selectedBook?.id === book.id ? "default" : "outline"}
-                        className="h-auto py-2 justify-start font-normal text-sm"
-                        onClick={() => handleMobileBookSelect(book)}
-                      >
-                        {book.name}
-                      </Button>
-                    ))}
+              {/* Two-column layout for desktop/tablet */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {getFilteredTestaments().map((testament) => (
+                  <div key={testament.id} className="space-y-3">
+                    <h3 className="font-semibold text-amber-700 dark:text-amber-300 text-sm uppercase tracking-wider flex items-center gap-2">
+                      {testament.name === 'Old Testament' ? '📜' : '✝️'} {testament.name}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {testament.books.map((book) => (
+                        <Button
+                          key={book.id}
+                          variant={selectedBook?.id === book.id ? "default" : "outline"}
+                          className="h-auto py-2 justify-start font-normal text-sm"
+                          onClick={() => handleMobileBookSelect(book)}
+                        >
+                          {book.name}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
               
               {getFilteredTestaments().length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
@@ -1009,6 +1012,68 @@ export default function ReadBiblePage() {
           </ScrollArea>
         </SheetContent>
       </Sheet>
+
+      {/* Desktop Book Selection Dialog */}
+      <Dialog open={bookSelectorOpen && !isMobile} onOpenChange={setBookSelectorOpen}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-2xl flex items-center gap-2">
+              <BookOpen className="h-6 w-6 text-amber-600" />
+              Select a Bible Book
+            </DialogTitle>
+            <div className="relative mt-3">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input 
+                type="text" 
+                placeholder="Search books..." 
+                className="pl-10 h-11"
+                value={bookSearchQuery}
+                onChange={(e) => setBookSearchQuery(e.target.value)}
+              />
+              {bookSearchQuery && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="absolute right-2 top-2 h-7 w-7 p-0" 
+                  onClick={() => setBookSearchQuery('')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 mt-4 overflow-y-auto pr-4">
+            <div className="grid grid-cols-2 gap-8" data-tutorial="book-selector">
+              {getFilteredTestaments().map((testament) => (
+                <div key={testament.id} className="space-y-4">
+                  <h3 className="font-semibold text-amber-700 dark:text-amber-300 text-base uppercase tracking-wider flex items-center gap-2 sticky top-0 bg-white dark:bg-gray-900 py-2 z-10">
+                    {testament.name === 'Old Testament' ? '📜' : '✝️'} {testament.name}
+                  </h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    {testament.books.map((book) => (
+                      <Button
+                        key={book.id}
+                        variant={selectedBook?.id === book.id ? "default" : "outline"}
+                        className="h-auto py-3 justify-start font-normal text-sm hover:bg-amber-50 dark:hover:bg-amber-900/30"
+                        onClick={() => handleMobileBookSelect(book)}
+                      >
+                        {book.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              
+              {getFilteredTestaments().length === 0 && (
+                <div className="col-span-2 text-center py-12 text-muted-foreground">
+                  No books found matching "{bookSearchQuery}"
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
       
       {/* Mobile Filter Sheet */}
       <Sheet open={filterOpen && isMobile} onOpenChange={setFilterOpen}>
