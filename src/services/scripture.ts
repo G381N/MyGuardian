@@ -271,13 +271,62 @@ export async function getBookByName(bookName: string): Promise<Book | null> {
   return booksData.find(b => b.name.toLowerCase() === bookName.toLowerCase()) || null;
 }
 
-export async function getTestamentBooks(testament: 'old' | 'new'): Promise<Book[]> {
+// Canonical book order mapping
+// The CSV has books in a specific order, but we want to display them in canonical Catholic order
+// Old Testament (46 books including Deuterocanonical), New Testament (27 books)
+
+const DEUTEROCANONICAL_BOOKS = [
+  'Tobit',          // ID 17
+  'Judith',         // ID 18
+  '1 Maccabees',    // ID 45 (first occurrence)
+  '2 Maccabees',    // ID 46 (first occurrence)
+  'Wisdom',         // ID 25
+  'Sirach',         // ID 26
+  'Baruch',         // ID 30
+];
+
+export async function getTestamentBooks(testament: 'old' | 'new' | 'deuterocanonical'): Promise<Book[]> {
   await loadCPDVData();
-  // Old Testament books typically have IDs 1-39, New Testament 40-66
-  // This is a rough approximation and might need adjustment based on the actual CPDV dataset
-  if (testament === 'old') {
-    return booksData.filter(b => b.id <= 39);
+  
+  // Group books by name to handle duplicate IDs
+  const uniqueBooks = new Map<string, Book>();
+  booksData.forEach(book => {
+    if (!uniqueBooks.has(book.name)) {
+      uniqueBooks.set(book.name, book);
+    }
+  });
+  
+  const allBooks = Array.from(uniqueBooks.values());
+  
+  if (testament === 'deuterocanonical') {
+    // Return Deuterocanonical/Apocryphal books
+    return allBooks.filter(b => DEUTEROCANONICAL_BOOKS.includes(b.name))
+      .sort((a, b) => {
+        const aIndex = DEUTEROCANONICAL_BOOKS.indexOf(a.name);
+        const bIndex = DEUTEROCANONICAL_BOOKS.indexOf(b.name);
+        return aIndex - bIndex;
+      });
+  } else if (testament === 'old') {
+    // Old Testament books (excluding Deuterocanonical)
+    // Genesis (1) through Malachi (44), but excluding the Deuterocanonical books
+    return allBooks.filter(b => 
+      b.id <= 44 && 
+      !DEUTEROCANONICAL_BOOKS.includes(b.name)
+    ).sort((a, b) => a.id - b.id);
   } else {
-    return booksData.filter(b => b.id >= 40);
+    // New Testament books (Matthew through Revelation)
+    // These are the books after the OT, starting with Matthew
+    const ntBooks = ['Matthew', 'Mark', 'Luke', 'John', 'Acts', 
+      'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians',
+      'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians',
+      '1 Timothy', '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James',
+      '1 Peter', '2 Peter', '1 John', '2 John', '3 John', 'Jude', 'Revelation'];
+    
+    return allBooks.filter(b => ntBooks.includes(b.name))
+      .sort((a, b) => {
+        const aIndex = ntBooks.indexOf(a.name);
+        const bIndex = ntBooks.indexOf(b.name);
+        return aIndex - bIndex;
+      });
   }
 }

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (action === 'testament-books' && testament) {
-      const books = await getTestamentBooks(testament as 'old' | 'new');
+      const books = await getTestamentBooks(testament as 'old' | 'new' | 'deuterocanonical');
       return NextResponse.json(books);
     }
 

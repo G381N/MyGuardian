@@ -212,39 +212,49 @@ export default function RosaryPage() {
 
   const handleStartGuided = () => {
     setGuidedMode(true);
-    setCurrentBead(0);
+    setCurrentBead(-2); // Start at -2 for Sign of Cross, -1 for Apostles' Creed, 0 for first decade
   };
 
   const handleNextBead = () => {
     const mystery = mysteries.find(m => m.id === selectedMystery);
     if (!mystery) return;
 
-    // Pattern for each decade: 1 Our Father + 10 Hail Marys + 1 Glory Be + 1 Fatima Prayer = 13 prayers
+    // Opening prayers: -2 (Sign of Cross), -1 (Apostles' Creed)
+    // Then: Pattern for each decade: 1 Our Father + 10 Hail Marys + 1 Glory Be + 1 Fatima Prayer = 13 prayers
     const beadsPerDecade = 13;
-    const totalBeads = beadsPerDecade * 5;
+    const totalBeads = beadsPerDecade * 5 + 2; // +2 for opening prayers
 
-    if (currentBead < totalBeads - 1) {
+    if (currentBead < totalBeads - 3) { // -3 because we start at -2
       setCurrentBead(currentBead + 1);
-      // Update decade when transitioning
-      const newDecade = Math.floor((currentBead + 1) / beadsPerDecade);
-      if (newDecade !== currentDecade) {
-        setCurrentDecade(newDecade);
+      // Update decade when transitioning (only for beads >= 0)
+      if (currentBead >= 0) {
+        const newDecade = Math.floor(currentBead / beadsPerDecade);
+        if (newDecade !== currentDecade && newDecade < 5) {
+          setCurrentDecade(newDecade);
+        }
       }
     }
   };
 
   const handlePreviousBead = () => {
-    if (currentBead > 0) {
+    if (currentBead > -2) {
       setCurrentBead(currentBead - 1);
-      // Update decade when transitioning
-      const newDecade = Math.floor((currentBead - 1) / 13);
-      if (newDecade !== currentDecade) {
-        setCurrentDecade(newDecade);
+      // Update decade when transitioning (only for beads >= 0)
+      if (currentBead > 0) {
+        const newDecade = Math.floor((currentBead - 1) / 13);
+        if (newDecade !== currentDecade) {
+          setCurrentDecade(newDecade);
+        }
       }
     }
   };
 
   const getCurrentPrayer = () => {
+    // Opening prayers
+    if (currentBead === -2) return { name: 'Sign of the Cross', text: prayers.signOfCross };
+    if (currentBead === -1) return { name: 'Apostles\' Creed', text: prayers.apostlesCreed };
+    
+    // Regular decade prayers
     const beadInDecade = currentBead % 13;
     if (beadInDecade === 0) return { name: 'Our Father', text: prayers.ourFather };
     if (beadInDecade <= 10) return { name: `Hail Mary (${beadInDecade}/10)`, text: prayers.hailMary };
@@ -393,7 +403,7 @@ export default function RosaryPage() {
                 <CardTitle className="font-headline text-lg flex items-center justify-between">
                   <span>Guided Prayer Mode</span>
                   <Badge variant="secondary">
-                    Bead {currentBead + 1} of {13 * 5}
+                    {currentBead < 0 ? 'Opening Prayers' : `Bead ${currentBead + 1} of ${13 * 5}`}
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -411,7 +421,7 @@ export default function RosaryPage() {
                   <Button
                     variant="outline"
                     onClick={handlePreviousBead}
-                    disabled={currentBead === 0}
+                    disabled={currentBead === -2}
                     className="flex-1"
                   >
                     <ChevronLeft className="h-4 w-4 mr-2" />
@@ -429,13 +439,21 @@ export default function RosaryPage() {
 
                 {currentBead === 13 * 5 - 1 && (
                   <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-center">
-                    <p className="font-semibold text-green-700 dark:text-green-300">
+                    <p className="font-semibold text-green-700 dark:text-green-300 mb-2">
                       You have completed the {selectedMysteryData.name}! 🙏
                     </p>
+                    <p className="text-sm text-green-600 dark:text-green-400 mb-3">
+                      Conclude with the Hail Holy Queen
+                    </p>
+                    <div className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-700 mb-3">
+                      <p className="text-xs italic text-muted-foreground leading-relaxed">
+                        {prayers.hailHolyQueen}
+                      </p>
+                    </div>
                     <Button
                       variant="outline"
                       onClick={() => setGuidedMode(false)}
-                      className="mt-3"
+                      className="mt-2"
                     >
                       Return to Decade View
                     </Button>

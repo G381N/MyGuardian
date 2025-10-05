@@ -50,7 +50,7 @@ export default function ReadBiblePage() {
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
   const [verses, setVerses] = useState<Verse[]>([]);
-  const [testament, setTestament] = useState<'all' | 'old' | 'new'>('all');
+  const [testament, setTestament] = useState<'all' | 'old' | 'new' | 'deuterocanonical'>('all');
   const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [highlightedText, setHighlightedText] = useState<string>('');
@@ -81,11 +81,17 @@ export default function ReadBiblePage() {
         setFilteredBooks(booksData);
         
         // Organize books by testament
-        const oldTestamentBooks = booksData.filter((book: Book) => book.id < 40);
-        const newTestamentBooks = booksData.filter((book: Book) => book.id >= 40);
+        const oldTestamentBooksResponse = await fetch('/api/scripture?action=testament-books&testament=old');
+        const deuterocanonicalBooksResponse = await fetch('/api/scripture?action=testament-books&testament=deuterocanonical');
+        const newTestamentBooksResponse = await fetch('/api/scripture?action=testament-books&testament=new');
+        
+        const oldTestamentBooks = await oldTestamentBooksResponse.json();
+        const deuterocanonicalBooks = await deuterocanonicalBooksResponse.json();
+        const newTestamentBooks = await newTestamentBooksResponse.json();
         
         setTestaments([
           { id: 'old', name: 'Old Testament', books: oldTestamentBooks },
+          { id: 'deuterocanonical', name: 'Deuterocanonical', books: deuterocanonicalBooks },
           { id: 'new', name: 'New Testament', books: newTestamentBooks }
         ]);
         
@@ -188,6 +194,10 @@ export default function ReadBiblePage() {
 
   const navigateChapter = useCallback((direction: 'prev' | 'next') => {
     if (!selectedBook) return;
+
+    // Clear any search highlights before navigating
+    const highlightedElements = document.querySelectorAll('.search-highlight');
+    highlightedElements.forEach(el => el.classList.remove('search-highlight'));
 
     if (direction === 'prev') {
       if (selectedChapter > 1) {
@@ -463,6 +473,10 @@ export default function ReadBiblePage() {
 
   // Navigate to a specific verse from search results
   const navigateToVerse = (verse: Verse) => {
+    // Clear any existing highlights before navigating
+    const highlightedElements = document.querySelectorAll('.search-highlight');
+    highlightedElements.forEach(el => el.classList.remove('search-highlight'));
+    
     const targetBook = books.find(book => book.id === verse.bookId);
     if (targetBook) {
       setSelectedBook(targetBook);
@@ -654,7 +668,7 @@ export default function ReadBiblePage() {
                   {/* Testament Toggle */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Testament</label>
-                    <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new') => setTestament(value)}>
+                    <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new' | 'deuterocanonical') => setTestament(value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -665,6 +679,7 @@ export default function ReadBiblePage() {
                       >
                         <SelectItem value="all">All Books</SelectItem>
                         <SelectItem value="old">Old Testament</SelectItem>
+                        <SelectItem value="deuterocanonical">Deuterocanonical</SelectItem>
                         <SelectItem value="new">New Testament</SelectItem>
                       </SelectContent>
                     </Select>
@@ -826,24 +841,35 @@ export default function ReadBiblePage() {
                     data-tutorial="scripture-content"
                     ref={contentRef}
                   >
-                    <div className="text-xl leading-8 text-gray-900 dark:text-gray-100 font-headline select-text text-justify">
+                    <div className="text-base md:text-lg leading-relaxed md:leading-loose text-gray-900 dark:text-gray-100 font-headline select-text">
                       {/* Only show hint text if not in fullscreen mode */}
                       {isMobile && !isFullscreen && (
-                        <div className="mb-4 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800" data-ui-element="true">
+                        <div className="mb-6 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800" data-ui-element="true">
                           <p>Highlight any text to receive AI-powered spiritual insights</p>
                         </div>
                       )}
-                      <p className="first-letter:text-7xl first-letter:font-bold first-letter:text-amber-600 dark:first-letter:text-amber-400 first-letter:mr-3 first-letter:float-left first-letter:leading-none first-letter:mt-2 indent-0">
+                      
+                      {/* Chapter Number Header */}
+                      {selectedBook && selectedChapter && (
+                        <h2 className="text-3xl md:text-4xl font-bold text-amber-700 dark:text-amber-400 mb-8 font-headline">
+                          Chapter {selectedChapter}
+                        </h2>
+                      )}
+                      
+                      {/* Verses with improved spacing */}
+                      <div className="space-y-2">
                         {verses.map((verse, index) => (
-                          <span key={verse.verse} data-verse={verse.verse}>
-                            <sup className="text-sm font-bold text-amber-600 dark:text-amber-400 mr-1 relative -top-1">
+                          <span key={verse.verse} data-verse={verse.verse} className="inline-block">
+                            <sup className="text-[0.65rem] font-bold text-amber-600 dark:text-amber-400 mr-1.5">
                               {verse.verse}
                             </sup>
-                            {verse.text}
-                            {index < verses.length - 1 ? ' ' : ''}
+                            <span className="text-gray-800 dark:text-gray-200">
+                              {verse.text}
+                            </span>
+                            {index < verses.length - 1 && <span className="inline-block w-1.5" />}
                           </span>
                         ))}
-                      </p>
+                      </div>
                     </div>
                   </div>
                   
@@ -980,12 +1006,12 @@ export default function ReadBiblePage() {
           
           <ScrollArea className="flex-1 mt-4 overflow-y-auto pr-4 pb-6">
             <div className="space-y-6 pb-2" data-tutorial="book-selector">
-              {/* Two-column layout for desktop/tablet */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Single column for mobile showing all testaments */}
+              <div className="grid grid-cols-1 gap-6">
                 {getFilteredTestaments().map((testament) => (
                   <div key={testament.id} className="space-y-3">
                     <h3 className="font-semibold text-amber-700 dark:text-amber-300 text-sm uppercase tracking-wider flex items-center gap-2">
-                      {testament.name === 'Old Testament' ? '📜' : '✝️'} {testament.name}
+                      {testament.name === 'Old Testament' ? '📜' : testament.name === 'Deuterocanonical' ? '📖' : '✝️'} {testament.name}
                     </h3>
                     <div className="grid grid-cols-2 gap-2">
                       {testament.books.map((book) => (
@@ -1044,11 +1070,11 @@ export default function ReadBiblePage() {
           </DialogHeader>
           
           <ScrollArea className="flex-1 mt-4 overflow-y-auto pr-4">
-            <div className="grid grid-cols-2 gap-8" data-tutorial="book-selector">
+            <div className="grid grid-cols-3 gap-6" data-tutorial="book-selector">
               {getFilteredTestaments().map((testament) => (
                 <div key={testament.id} className="space-y-4">
-                  <h3 className="font-semibold text-amber-700 dark:text-amber-300 text-base uppercase tracking-wider flex items-center gap-2 sticky top-0 bg-white dark:bg-gray-900 py-2 z-10">
-                    {testament.name === 'Old Testament' ? '📜' : '✝️'} {testament.name}
+                  <h3 className="font-semibold text-amber-700 dark:text-amber-300 text-sm uppercase tracking-wider flex items-center gap-2 sticky top-0 bg-white dark:bg-gray-900 py-2 z-10 border-b border-amber-200 dark:border-amber-800">
+                    {testament.name === 'Old Testament' ? '📜' : testament.name === 'Deuterocanonical' ? '📖' : '✝️'} {testament.name}
                   </h3>
                   <div className="grid grid-cols-1 gap-2">
                     {testament.books.map((book) => (
@@ -1066,7 +1092,7 @@ export default function ReadBiblePage() {
               ))}
               
               {getFilteredTestaments().length === 0 && (
-                <div className="col-span-2 text-center py-12 text-muted-foreground">
+                <div className="col-span-3 text-center py-12 text-muted-foreground">
                   No books found matching "{bookSearchQuery}"
                 </div>
               )}
@@ -1088,13 +1114,14 @@ export default function ReadBiblePage() {
             {/* Testament Toggle */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Testament</label>
-              <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new') => setTestament(value)}>
+              <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new' | 'deuterocanonical') => setTestament(value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="bottom" align="start" position="popper">
                   <SelectItem value="all">All Books</SelectItem>
                   <SelectItem value="old">Old Testament</SelectItem>
+                  <SelectItem value="deuterocanonical">Deuterocanonical</SelectItem>
                   <SelectItem value="new">New Testament</SelectItem>
                 </SelectContent>
               </Select>
@@ -1164,6 +1191,71 @@ export default function ReadBiblePage() {
           </div>
         </SheetContent>
       </Sheet>
+      
+      {/* Desktop Filter Dialog (for fullscreen mode) */}
+      <Dialog open={filterOpen && !isMobile} onOpenChange={setFilterOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-headline text-xl flex items-center gap-2">
+              <Filter className="h-5 w-5 text-amber-600" />
+              Chapter Options
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Testament Toggle */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Testament</label>
+              <Select value={testament} onValueChange={(value: 'all' | 'old' | 'new' | 'deuterocanonical') => setTestament(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="bottom" align="start" position="popper">
+                  <SelectItem value="all">All Books</SelectItem>
+                  <SelectItem value="old">Old Testament</SelectItem>
+                  <SelectItem value="deuterocanonical">Deuterocanonical</SelectItem>
+                  <SelectItem value="new">New Testament</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Book Selector */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Book</label>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setFilterOpen(false);
+                  setTimeout(() => setBookSelectorOpen(true), 300);
+                }}
+                className="w-full justify-between"
+              >
+                <span>{selectedBook?.name || "Select a book"}</span>
+                <BookOpen className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+
+            {/* Chapter Selector */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Chapter</label>
+              <Select value={selectedChapter.toString()} onValueChange={(value) => {
+                handleChapterChange(value);
+                setFilterOpen(false);
+              }}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side="bottom" align="start" position="popper" className="max-h-[200px] overflow-y-auto">
+                  {selectedBook?.chapters.map((chapter) => (
+                    <SelectItem key={chapter} value={chapter.toString()}>
+                      Chapter {chapter}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Tutorial */}
       <BiblePageTutorial />
       
